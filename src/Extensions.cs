@@ -16,28 +16,113 @@ namespace ichortower.ECC;
 
 internal enum StreamStatus {
     Active = 0,
-    Ended = -484,
+    Ended,
     AwaitingEmote,
     AwaitingDelay,
     AwaitingSpeak,
 }
 
+internal class EventExtraDataBucket {
+    internal StreamStatus Status = StreamStatus.Active;
+    internal int DelayTimer = 0;
+    internal int RepeatAnchor = -1;
+    internal int RepeatCounter = 0;
+    internal int RepeatTimer = 0;
+}
+
 internal static class Extensions
 {
 
+    internal static Dictionary<SEvent, EventExtraDataBucket> EventExtraData = new();
+
+    internal static bool CleanupQueued = false;
+
+    internal static void CleanUp()
+    {
+        Log.Debug("running event extra data cleanup");
+        EventExtraData.Clear();
+        CleanupQueued = false;
+    }
+
+    internal static EventExtraDataBucket BucketFor(SEvent evt)
+    {
+        EventExtraDataBucket ret;
+        if (!EventExtraData.TryGetValue(evt, out ret)) {
+            ret = new();
+            EventExtraData[evt] = ret;
+            if (!CleanupQueued) {
+                // like Variable.cs, register this to main event
+                Game1.CurrentEvent.onEventFinished += CleanUp;
+                CleanupQueued = true;
+            }
+        }
+        return ret;
+    }
+
     internal static bool IsStatus(this SEvent evt, StreamStatus st)
     {
-        return evt.int_useMeForAnything == (int)st;
+        return BucketFor(evt).Status == st;
     }
 
     internal static void SetStatus(this SEvent evt, StreamStatus st)
     {
-        evt.int_useMeForAnything = (int)st;
+        BucketFor(evt).Status = st;
+    }
+
+    internal static void SetRepeatAnchor(this SEvent evt, int index)
+    {
+        BucketFor(evt).RepeatAnchor = index;
+    }
+
+    internal static int GetRepeatAnchor(this SEvent evt)
+    {
+        return BucketFor(evt).RepeatAnchor;
     }
 
     internal static void SetDelayTimer(this SEvent evt, int millis)
     {
-        evt.int_useMeForAnything2 = millis;
+        BucketFor(evt).DelayTimer = millis;
+    }
+
+    internal static void SetRepeatTimer(this SEvent evt, int millis)
+    {
+        BucketFor(evt).RepeatTimer = millis +
+                (int)Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
+    }
+
+    internal static int GetRepeatTimer(this SEvent evt)
+    {
+        return BucketFor(evt).RepeatTimer;
+    }
+
+    internal static bool CheckRepeatTimer(this SEvent evt, GameTime time)
+    {
+        if (!ichortower.TowerCore.Game.IsActive()) {
+            return false;
+        }
+        EventExtraDataBucket socket = BucketFor(evt);
+        if ((int)Game1.currentGameTime.TotalGameTime.TotalMilliseconds > socket.RepeatTimer) {
+            socket.RepeatTimer = 0;
+            return true;
+        }
+        return false;
+    }
+
+    internal static void SetRepeatCounter(this SEvent evt, int count)
+    {
+        BucketFor(evt).RepeatCounter = count;
+    }
+
+    internal static int GetRepeatCounter(this SEvent evt)
+    {
+        return BucketFor(evt).RepeatCounter;
+    }
+
+    internal static bool DecrementRepeatCounter(this SEvent evt)
+    {
+        EventExtraDataBucket socket = BucketFor(evt);
+        --socket.RepeatCounter;
+        return socket.RepeatCounter <= 0;
     }
 
     internal static bool TickDownDelayTimer(this SEvent evt, GameTime time)
@@ -45,9 +130,10 @@ internal static class Extensions
         if (!ichortower.TowerCore.Game.IsActive()) {
             return false;
         }
-        evt.int_useMeForAnything2 = Math.Max(0,
-                evt.int_useMeForAnything2 - time.ElapsedGameTime.Milliseconds);
-        return evt.int_useMeForAnything2 <= 0;
+        EventExtraDataBucket socket = BucketFor(evt);
+        socket.DelayTimer = Math.Max(0, socket.DelayTimer -
+                time.ElapsedGameTime.Milliseconds);
+        return socket.DelayTimer <= 0;
     }
 
 
