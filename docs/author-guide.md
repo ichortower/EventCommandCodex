@@ -38,6 +38,10 @@ This document explains how to use the event commands added by this mod.
   * [TemporaryMapOverride](#temporarymapoverride)
 * [Conditional Execution](#conditional-execution)
   * [If/ElseIf/Else/EndIf](#ifelseifelseendif)
+* [Repeat Blocks](#repeat-blocks)
+  * [RepeatCount](#repeatcount)
+  * [RepeatTime](#repeatcount)
+  * [EndRepeat](#endrepeat)
 * [Event Variables](#event-variables)
   * [VarSet](#varset)
   * [VAR_QUERY](#var_query)
@@ -178,7 +182,7 @@ This command restarts the specified streams. A restarted stream has its command
 index set to 0 and its idle state forcibly unset.
 
 This is intended for use on completed or halted streams, but it should work on
-actives ones as well.
+active ones as well.
 
 A stream can restart itself (but see `StreamLoop`).
 
@@ -453,10 +457,10 @@ and you can give the optional argument `wait` to block until the queue empties.
 `ichortower.ECC_AmbientLightReset <duration> [override] [wait]`
 
 This command sets up a shift, just like `AmbientLightShift`, except the values
-used for the shift are automatically determined to be the ambient light setting
-that was in place when the event started. This allows you to easily undo
-whatever ambient light changes you made during your event without needing to
-know what they were ahead of time.
+used for the shift are automatically set to the ambient light values that were
+in place when the event started. This allows you to easily undo whatever
+ambient light changes you made during your event without needing to know what
+they were ahead of time.
 
 The `duration`, `override`, and `wait` arguments work just like above.
 
@@ -548,7 +552,7 @@ would specify in e.g. a Content Patcher pack).
 These commands define a set of conditional command blocks. Just like a
 conventional programming language, the conditions are checked in order, and as
 soon as one is satisfied, that block is executed and the others are discarded
-without even being evaluated.
+without being evaluated.
 
 You can put any number of event commands between the control commands, e.g.:
 
@@ -589,6 +593,72 @@ You *should* be able to nest these commands, but I haven't tested that yet.
 **Note:** the game state queries that drive this are evaluated when the
 blocks are parsed for execution, so they are "real time" and may reflect
 changes to game state that have occurred earlier in the event.
+
+
+## Repeat Blocks
+
+These commands let you repeat a section of your event some number of times,
+or for a certain amount of time. **They cannot be nested**, so do not attempt
+to do that, but they can safely be used in streams.
+
+
+### `RepeatCount`
+
+`ichortower.ECC_RepeatCount <number>`
+
+This command declares the start of a block which should be repeated a certain
+number of times. All of the commands between this and the next `EndRepeat`
+command will be executed repeatedly. The `number` argument should be an
+integer.
+
+For example:
+
+```
+ichortower.ECC_RepeatCount 5
+pause 400
+emote Abigail 16
+speak Abigail "What? No way!$u"
+ichortower.ECC_EndRepeat
+```
+
+This is not quite equivalent to just listing those commands 5 times in a row,
+since one frame will be consumed executing the `EndRepeat` command each
+iteration, but it's mostly equivalent.
+
+
+### `RepeatTime`
+
+`ichortower.ECC_RepeatTime <milliseconds>`
+
+This works just like `RepeatCount`, except that the argument is a number of
+milliseconds, and the commands will be repeated until at least that number of
+milliseconds has elapsed since the block began.
+
+For example:
+
+```
+ichortower.ECC_RepeatTime 12500
+pause 400
+emote Abigail 16
+speak Abigail "What? No way!$u"
+ichortower.ECC_EndRepeat
+```
+
+This block will be repeated until 12.5 seconds (total) have elapsed. This may
+turn out to be a variable number of times, since in this case player input
+(`speak`) is involved.
+
+Note that the time is checked at the end of the block, so the block will always
+execute fully and will not stop partway through an iteration. This also means
+the time argument is a *minimum* duration, and the actual runtime may
+(significantly) exceed it.
+
+
+### EndRepeat
+
+`ichortower.ECC_EndRepeat`
+
+Declares the end of a repeat block. Takes no arguments.
 
 
 ## Event Variables
