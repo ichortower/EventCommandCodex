@@ -2,6 +2,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Delegates;
+using StardewValley.Internal;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 using System;
@@ -24,9 +25,6 @@ internal sealed class ModMain : Mod
         foreach (Type t in types) {
             RegisterCommands(t);
         }
-        // TODO unhardcode this
-        StardewValley.Event.RegisterCommandAlias($"{Main.ModId}_StreamBegin",
-                $"{Main.ModId}_StreamStart");
         TriggerActionManager.RegisterAction($"{Main.ModId}_WorldAdvanceTime",
                 ichortower.ECC.World.traction_WorldAdvanceTime);
     }
@@ -52,6 +50,12 @@ internal sealed class ModMain : Mod
                 StardewValley.Event.RegisterCommand(key,
                         (EventCommandDelegate) Delegate.CreateDelegate(
                         typeof(EventCommandDelegate), func));
+                OtherNamesAttribute attr = func.GetCustomAttribute<OtherNamesAttribute>();
+                if (attr is not null) {
+                    Array.ForEach(attr.Aliases, (alias) => {
+                        StardewValley.Event.RegisterCommandAlias($"{Main.ModId}_{alias}", key);
+                    });
+                }
             }
             else if (func.Name.StartsWith("gsq_")) {
                 string key = func.Name.Replace("gsq_", $"{Main.ModId}_");

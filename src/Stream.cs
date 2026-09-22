@@ -3,6 +3,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Extensions;
+using StardewValley.Internal;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -35,6 +36,7 @@ internal class Stream
      * state: NPCs, dialogue, viewport, etc. It is the author's responsibility to avoid modifying
      * such things from multiple contexts at once.
      */
+    [OtherNames(new string[]{"StreamBegin"})]
     public static void command_StreamStart(SEvent evt, string[] args, EventContext context)
     {
         // first, snarf the command list. then we avoid executing if the start is malformed
@@ -44,6 +46,8 @@ internal class Stream
         List<string> commands = new();
         for (; i < evt.eventCommands.Length; ++i) {
             if (evt.eventCommands[i].StartsWith($"{Main.ModId}_StreamStart",
+                    StringComparison.OrdinalIgnoreCase) ||
+                evt.eventCommands[i].StartsWith($"{Main.ModId}_StreamBegin",
                     StringComparison.OrdinalIgnoreCase)) {
                 ++depth;
             }
@@ -102,6 +106,67 @@ internal class Stream
     {
         int target = (evt.Equals(Game1.CurrentEvent) ? 3 : 0);
         evt.CurrentCommand = target;
+    }
+
+
+    /*
+     * ichortower.ECC_StreamSuspend
+     *
+     * This command puts the current stream to sleep, causing it to block at this command
+     * until another stream wakes it up by using StreamResume.
+     */
+    [OtherNames(new string[]{"StreamSleep"})]
+    public static void command_StreamSuspend(SEvent evt, string[] args, EventContext context)
+    {
+        if (evt.IsStatus(StreamStatus.Resuming)) {
+            evt.SetStatus(StreamStatus.Active);
+            ++evt.CurrentCommand;
+            return;
+        }
+        evt.SetStatus(StreamStatus.Suspended);
+    }
+
+
+    /*
+     * ichortower.ECC_StreamResume <id> [id...]
+     *
+     * This command blocks until each named stream has been successfully sent a resume
+     * signal. If any of the given ids are invalid, the entire command is skipped.
+     */
+    [OtherNames(new string[]{"StreamWake"})]
+    public static void command_StreamResume(SEvent evt, string[] args, EventContext context)
+    {
+        if (args.Length < 2) {
+            context.LogErrorAndSkip($"requires 1 or more stream ids");
+            return;
+        }
+        if (evt.GetPendingSignalCount() == 0) {
+            for (int i = 1; i < args.Length; ++i) {
+                if (!Streams.OpenStreams.TryGetValue(args[i], out SEvent target)) {
+                    context.LogErrorAndSkip($"requested unknown stream id '{args[i]}'");
+                    evt.ClearPendingSignals();
+                    return;
+                }
+                evt.AddPendingSignal(args[i]);
+            }
+        }
+        for (int i = 1; i < args.Length; ++i) {
+            string id = args[i];
+            // we shouldn't need to check id validity again, but we need the ref anyway.
+            // it's merely a warning this time though (stream vanished?)
+            if (!Streams.OpenStreams.TryGetValue(id, out SEvent target)) {
+                Log.Warn($"couldn't find stream '{id}', but it existed earlier");
+                evt.RemovePendingSignal(id);
+                continue;
+            }
+            if (target.IsStatus(StreamStatus.Suspended)) {
+                target.SetStatus(StreamStatus.Resuming);
+                if (evt.RemovePendingSignal(id)) {
+                    ++evt.CurrentCommand;
+                    break;
+                }
+            }
+        }
     }
 
 

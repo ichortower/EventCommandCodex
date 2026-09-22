@@ -20,6 +20,8 @@ internal enum StreamStatus {
     AwaitingEmote,
     AwaitingDelay,
     AwaitingSpeak,
+    Suspended,
+    Resuming,
 }
 
 internal class EventExtraDataBucket {
@@ -28,6 +30,7 @@ internal class EventExtraDataBucket {
     internal int RepeatAnchor = -1;
     internal int RepeatCounter = 0;
     internal int RepeatTimer = 0;
+    internal HashSet<string> PendingSignals = new();
 }
 
 internal static class Extensions
@@ -69,6 +72,22 @@ internal static class Extensions
         BucketFor(evt).Status = st;
     }
 
+    internal static void SetDelayTimer(this SEvent evt, int millis)
+    {
+        BucketFor(evt).DelayTimer = millis;
+    }
+
+    internal static bool TickDownDelayTimer(this SEvent evt, GameTime time)
+    {
+        if (!ichortower.TowerCore.Game.IsActive()) {
+            return false;
+        }
+        EventExtraDataBucket socket = BucketFor(evt);
+        socket.DelayTimer = Math.Max(0, socket.DelayTimer -
+                time.ElapsedGameTime.Milliseconds);
+        return socket.DelayTimer <= 0;
+    }
+
     internal static void SetRepeatAnchor(this SEvent evt, int index)
     {
         BucketFor(evt).RepeatAnchor = index;
@@ -77,11 +96,6 @@ internal static class Extensions
     internal static int GetRepeatAnchor(this SEvent evt)
     {
         return BucketFor(evt).RepeatAnchor;
-    }
-
-    internal static void SetDelayTimer(this SEvent evt, int millis)
-    {
-        BucketFor(evt).DelayTimer = millis;
     }
 
     internal static void SetRepeatTimer(this SEvent evt, int millis)
@@ -125,15 +139,26 @@ internal static class Extensions
         return socket.RepeatCounter <= 0;
     }
 
-    internal static bool TickDownDelayTimer(this SEvent evt, GameTime time)
+    internal static void AddPendingSignal(this SEvent evt, string id)
     {
-        if (!ichortower.TowerCore.Game.IsActive()) {
-            return false;
-        }
+        BucketFor(evt).PendingSignals.Add(id);
+    }
+
+    internal static int GetPendingSignalCount(this SEvent evt)
+    {
+        return BucketFor(evt).PendingSignals.Count;
+    }
+
+    internal static bool RemovePendingSignal(this SEvent evt, string id)
+    {
         EventExtraDataBucket socket = BucketFor(evt);
-        socket.DelayTimer = Math.Max(0, socket.DelayTimer -
-                time.ElapsedGameTime.Milliseconds);
-        return socket.DelayTimer <= 0;
+        socket.PendingSignals.Remove(id);
+        return socket.PendingSignals.Count == 0;
+    }
+
+    internal static void ClearPendingSignals(this SEvent evt)
+    {
+        BucketFor(evt).PendingSignals.Clear();
     }
 
 
