@@ -11,6 +11,8 @@ This document explains how to use the event commands added by this mod.
   * [StreamEnd](#streamend)
   * [StreamAwait](#streamawait)
   * [StreamHalt](#streamhalt)
+  * [StreamSuspend](#streamsuspend)
+  * [StreamResume](#streamresume)
   * [StreamRestart](#streamrestart)
   * [StreamLoop](#streamloop)
 * [Stream-Safe Command Replacements](#stream-safe-command-replacements)
@@ -108,7 +110,7 @@ The power this gives you might not be obvious, so let's consider an example:
 
 ### `StreamStart`
 
-`ichortower.ECC_StreamStart <id>`
+`ichortower.ECC_StreamStart <id>`\
 `ichortower.ECC_StreamBegin <id>` (alias)
 
 This command declares a stream. When it is encountered, it immediately scans
@@ -157,11 +159,6 @@ A stream cannot await itself (this will cause an error); but there is not yet
 any protection against circular awaiting, so be careful not to do that.
 
 
-### `StreamPause`
-
-Defunct. See [Pause](#pause).
-
-
 ### `StreamHalt`
 
 `ichortower.ECC_StreamHalt <id> [id...]`
@@ -172,6 +169,37 @@ state forcibly set to idle. As a result, it will immediately satisfy any other
 stream that is awaiting it, and its id becomes available again for reuse.
 
 A stream *can* halt itself, although I don't know what use case that has.
+
+
+### `StreamSuspend`
+
+`ichortower.ECC_StreamSuspend`\
+`ichortower.ECC_StreamSleep` (alias)
+
+This command causes the current stream to pause indefinitely at this point,
+waiting until another stream restarts it with the `StreamResume` command. The
+purpose is to allow synchronization without having to create lots of streams;
+you can have a long-running stream that stops at specific points and will
+resume only when another stream "catches up".
+
+You can also use this command by its other name, `StreamSleep`.
+
+
+### `StreamResume`
+
+`ichortower.ECC_StreamResume <id> [id...]`\
+`ichortower.ECC_StreamWake <id> [id...]` (alias)
+
+This command tells the suspended streams specified in the arguments to resume
+executing. If a given stream is not currently suspended, it cannot be resumed,
+and **this command will block until that stream does suspend itself,**
+whereupon it will immediately be told to resume.
+
+Put another way, this command will block until it successfully resumes all
+specified streams, so take care that all such streams will suspend, or you
+may cause your event to softlock.
+
+You can also use this command by its other name, `StreamWake`.
 
 
 ### `StreamRestart`
