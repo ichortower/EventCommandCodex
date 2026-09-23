@@ -104,8 +104,54 @@ other stream that will wait for it to reach this state.
 The power this gives you might not be obvious, so let's consider an example:
 
 ```
-(example to follow when fully baked)
+Saloon
+continue
+12 21
+farmer 11 20 0 Elliott 12 20 0 Gus 12 18 2
+pause 1200
+speak Elliott "... and that will be all. Thank you, Gus.$h"
+-- the stream starts here
+ichortower.ECC_StreamStart gusfetching
+pause 820
+emote Gus 40
+advancedMove Gus false 2 0 0 -1 4 10
+pause 2800
+textAboveHead Gus "What? I'm out?"
+pause 2100
+advancedMove Gus false 1 0 4 1800 -2 0 4 3520
+ichortower.ECC_ActorAwaitMovement Gus
+ichortower.ECC_StreamEnd
+-- meanwhile, the event continues here
+faceDirection Elliott 3
+faceDirection farmer 1
+speak Elliott "I, for one, am looking forward to this dish. I haven't had it in some time!"
+emote farmer 32
+speak Elliott "Yes, there's nothing quite like it. A symphony of flavors!"
+faceDirection Elliott 0
+faceDirection farmer 0
+-- wait for the stream to end
+ichortower.ECC_StreamAwait gusfetching
+advancedMove Gus false 0 1 -1 0 2 10
+pause 220
+speak Elliott "Ah, this must be our food now.$h"
+speak Gus "Here you go! Fresh as you like!$h"
+emote Elliott 8
+pause 250
+emote Elliott 12
+speak Elliott "Gus! What is going on here? Have you made a substitution?$a"
+emote Gus 16 true
+emote farmer 28
+end
 ```
+
+... which looks like this:
+
+The important thing to understand is that while the main event uses some
+commands that block on player input (`speak`, in this case), the stream runs
+on its own schedule and can do whatever it wants without the need to have its
+commands interleaved with the main script. Gus will always take the same amount
+of time to finish preparing the dish, no matter how quickly or slowly the
+player advances the dialogue.
 
 
 ### `StreamStart`
