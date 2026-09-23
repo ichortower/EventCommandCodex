@@ -146,12 +146,14 @@ end
 
 ... which looks like this:
 
+<video src="https://github.com/user-attachments/assets/898260c3-f7a2-45de-9a6a-3803ec252805" ></video>
+
 The important thing to understand is that while the main event uses some
 commands that block on player input (`speak`, in this case), the stream runs
-on its own schedule and can do whatever it wants without the need to have its
-commands interleaved with the main script. Gus will always take the same amount
-of time to finish preparing the dish, no matter how quickly or slowly the
-player advances the dialogue.
+independently and can manage its own commands without the need to have them
+interleaved with the main script. This example is fairly simple (a few
+`advancedMove`s with a single `textAboveHead` in between), but even that
+would be difficult to approximate with vanilla commands.
 
 
 ### `StreamStart`
