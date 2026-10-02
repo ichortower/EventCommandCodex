@@ -85,7 +85,13 @@ internal class CG
         }
         int start = 2;
         if (args.Length < 2 || !ArgUtility.TryGetInt(args, 1, out int index, out _)) {
-            index = ActiveCGs.Count - 1;
+            index = ActiveCGs.FindLastIndex((item) => {
+                return item.Transition.Direction != CGTransitionDirection.Hide;
+            });
+            if (index == -1) {
+                context.LogErrorAndSkip($"Skipped command '{args[0]}': no active CGs left to hide");
+                return;
+            }
             start = 1;
         }
         CGTransition transition = ActiveCGs[index].Transition;
