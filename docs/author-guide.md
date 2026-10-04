@@ -149,7 +149,7 @@ end
 
 ... which looks like this:
 
-<video src="https://github.com/user-attachments/assets/898260c3-f7a2-45de-9a6a-3803ec252805" ></video>
+https://github.com/user-attachments/assets/898260c3-f7a2-45de-9a6a-3803ec252805
 
 The important thing to understand is that while the main event uses some
 commands that block on player input (`speak`, in this case), the stream runs
@@ -586,7 +586,7 @@ descriptions for details, but in all cases please take care not to use spaces.
   to display (by default, CGShow will use the entire texture).
 - `transition` specifies how the image should make its initial appearance. Two
   parameters are required: the type of transition to use and how long it should
-  take (in milliseconds).
+  take (in milliseconds). The type must be one of the following:
   - `zoom`: the image will zoom in from 0x0 to full size. This transition type
     supports two additional parameters `,x,y`: two integers giving tile
     coordinates to specify a tile that should serve as the origin for the zoom.
