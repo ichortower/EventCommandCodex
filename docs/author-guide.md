@@ -592,7 +592,7 @@ descriptions for details, but in all cases please take care not to use spaces.
     coordinates to specify a tile that should serve as the origin for the zoom.
   - `fade`: the image will fade from 0% opacity to 100%.
   - `pan`: the image will slide into view from offscreen. This transition type
-    supports two additional parameters `,x,y`: two integers giving a direction
+    *requires* two additional parameters `,x,y`: two integers giving a direction
     vector pointing to the initial offscreen position. For example, `,-1,-1`
     means equal amounts left and up, while `,2,5` means two parts right to five
     parts down.

@@ -198,7 +198,6 @@ internal class CG
             if (pieces.Length >= 4) {
                 if (int.TryParse(pieces[2], out int fromX) &&
                         int.TryParse(pieces[3], out int fromY)) {
-                    Log.Debug("setting coordinates");
                     transition.X = fromX;
                     transition.Y = fromY;
                 }
@@ -216,6 +215,33 @@ internal class CG
                 return false;
             }
             transition.Type = CGTransitionType.Fade;
+            return true;
+        }
+        if (pieces[0].EqualsIgnoreCase("pan")) {
+            if (pieces.Length < 4) {
+                error = $"Argument '{arg}' could not be parsed: expected x, y values" +
+                        $" for type '{pieces[0]}'.";
+                return false;
+            }
+            if (!int.TryParse(pieces[1], out int duration)) {
+                error = $"Argument '{arg}' could not be parsed: expected integer" +
+                        $" after '{pieces[0]}' but got '{pieces[1]}'.";
+                return false;
+            }
+            if (!int.TryParse(pieces[2], out int fromX) ||
+                    !int.TryParse(pieces[3], out int fromY)) {
+                error = $"Argument '{arg}' could not be parsed: expected integer values" +
+                        $" for x and y parameters.";
+                return false;
+            }
+            if (fromX == 0 && fromY == 0) {
+                error = $"Argument '{arg}' not accepted: at least one of x, y must be nonzero.";
+                return false;
+            }
+            transition.Type = CGTransitionType.Pan;
+            transition.Duration = duration;
+            transition.X = fromX;
+            transition.Y = fromY;
             return true;
         }
         error = $"Unimplemented transition type '{pieces[0]}'.";
@@ -383,6 +409,22 @@ internal class CGItem
         switch (Transition.Type) {
             case CGTransitionType.Fade:
                 AwayPosition = OutPosition;
+                break;
+            case CGTransitionType.Pan:
+                AwayPosition = OutPosition;
+                int factor = 1;
+                if (Transition.X == 0) {
+                    factor = Game1.viewport.Height / Math.Abs(Transition.Y) + 1;
+                }
+                else if (Transition.Y == 0) {
+                    factor = Game1.viewport.Width / Math.Abs(Transition.X) + 1;
+                }
+                else {
+                    factor = Math.Min(Game1.viewport.Height / Math.Abs(Transition.Y),
+                                      Game1.viewport.Width / Math.Abs(Transition.X)) + 1;
+                }
+                AwayPosition.X += Transition.X * factor;
+                AwayPosition.Y += Transition.Y * factor;
                 break;
             case CGTransitionType.Zoom:
             default:
