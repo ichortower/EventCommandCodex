@@ -34,6 +34,9 @@ This document explains how to use the event commands added by this mod.
   * [AmbientLightReset](#ambientlightreset)
   * [AmbientLightAwait](#ambientlightawait)
   * [AmbientLightHalt](#ambientlighthalt)
+* [Displaying CGs](#displaying-cgs)
+  * [CGShow](#cgshow)
+  * [CGHide](#cghide)
 * [World Control](#world-control)
   * [WorldAdvanceTime](#worldadvancetime)
   * [TemporaryMapTiles](#temporarymaptiles)
@@ -51,7 +54,7 @@ This document explains how to use the event commands added by this mod.
 * [Vanilla Command Notes](#vanilla-command-notes)
 
 
-## General Notes
+# General Notes
 
 Here are a few terms and things to know to help you read this document.
 
@@ -82,7 +85,7 @@ For example, `ViewportMove` has an optional argument `wait`. It expects to
 find the string "wait" there, not the string "true".
 
 
-## Stream Control
+# Stream Control
 
 "Streams" are the headline feature of the Codex. They allow you to implement
 parallel execution of multiple command lists, giving you a lot more control
@@ -275,7 +278,7 @@ it until `goto` arrives in 1.6.16 (and when it arrives, you should just use
 it instead of this).
 
 
-## Stream-Safe Command Replacements
+# Stream-Safe Command Replacements
 
 Some vanilla commands do not work as expected when used in streams (see
 [Vanilla Command Notes](#vanilla-command-notes) for more details). For this
@@ -318,7 +321,7 @@ this one accepts any number of integer arguments as pause durations, and will
 choose one of them at random.
 
 
-## Actor Control
+# Actor Control
 
 These commands give you more flexibility when controlling actors (characters).
 
@@ -412,7 +415,7 @@ But if you are already awaiting the movement in another stream, `next` will
 suffice.
 
 
-## Viewport Control
+# Viewport Control
 
 These commands are intended to replace `viewport move` with a version that I
 find more sensible: it uses tile units instead of pixels per frame, and you
@@ -491,7 +494,7 @@ The `move` and `shake` arguments are parsed just like `ViewportAwait`; leaving
 them out will default to stopping both queues.
 
 
-## Ambient Light Control
+# Ambient Light Control
 
 Although vanilla has the `ambientLight` command which lets you set the ambient
 light color and intensity at any time, it is merely immediate and there is no
@@ -556,7 +559,101 @@ This command immediately halts all ongoing ambient light shifts and empties
 the light shift queue.
 
 
-## World Control
+# Displaying CGs
+
+
+### `CGShow`
+
+`ichortower.ECC_CGShow <texture> [sourceRect:x,y,w,h] [transition:type,duration[,x,y]] [scaling:type[,i]] [color:#color] [letterbox:#color] [wait]`
+
+This command displays an image of your choosing on top of the world layer and
+below the UI layer, intended to be used for full-screen or otherwise dramatic
+representations of special or important moments. There are a lot of arguments,
+most of which are optional and can be given in any order. They are all
+**case-insensitive**.
+
+Most of the arguments expect a specific keyword followed by a colon `:` and
+then the parameters for the argument separated by commas `,`. See the argument
+descriptions for details, but in all cases please take care not to use spaces.
+
+- `texture` is the one non-optional argument and must be given first. It should
+  be a *game asset path* identifying which image to display, like
+  `Portraits/Abigail`. As is usual for asset names provided in slash-delimited
+  JSON, you will need to escape your quotes `\"` and use double backslashes
+  `\\` in the asset name, so a correct texture argument might look like this:
+  `\"Portraits\\Abigail\"`.
+- `sourceRect` uses its four parameters to specify the region of the texture
+  to display (by default, CGShow will use the entire texture).
+- `transition` specifies how the image should make its initial appearance. Two
+  parameters are required: the type of transition to use and how long it should
+  take (in milliseconds).
+  - `zoom`: the image will zoom in from 0x0 to full size. This transition type
+    supports two additional parameters `,x,y`: two integers giving tile
+    coordinates to specify a tile that should serve as the origin for the zoom.
+  - `fade`: the image will fade from 0% opacity to 100%.
+  - `pan`: the image will slide into view from offscreen. This transition type
+    supports two additional parameters `,x,y`: two integers giving a direction
+    vector pointing to the initial offscreen position. For example, `,-1,-1`
+    means equal amounts left and up, while `,2,5` means two parts right to five
+    parts down.
+- `scaling` specifies how the image should be displayed once the transition is
+  over. The required type parameter must be one of the following:
+  - `fit`: the image will fit entirely on screen, preserving aspect ratio
+    (most likely, some space will be left uncovered).
+  - `cover`: the image will cover the screen, preserving aspect ratio
+    (most likely, the image will be cropped/cut off).
+  - `stretch`: fill the entire screen, disregarding aspect ratio
+    (most likely, the image will be stretched or squashed).
+  - any floating-point number: use an absolute scaling factor
+
+  The optional parameter `i` means to use integer scaling only; for example, if
+  you set an image to `fit` and that requires a scale of 3.221, it will be
+  displayed at 3x instead.
+
+  So, for example, you might give the argument `scaling:fit,i`, which would
+  scale the image as much as possible so that it fits entirely on screen, while
+  also using an integer scaling factor.
+- `color` is used to tint the image by setting the draw color (as opposed to
+  the default white). The color value parameter can be an RGB or RGBA hex code
+  `#rrggbb` or `#rrggbbaa`, or it can be
+  [any valid MonoGame color name](https://github.com/ichortower/FontSmasher/blob/prod/docs/color-table.md).
+  At this time, decimal rgb(a) values are not supported (they would require
+  spaces).
+- `letterbox` takes a color value just like `color`, except it sets the color
+  used to fill in any unused space around the image, filling the remainder of
+  the screen with a solid color. By default, this is transparent, so there is
+  no visible letterbox.
+- `wait` takes no parameters, but tells ECC to block the event loop until the
+  transition completes and the CG is fully displayed.
+
+You can show multiple CGs if you wish. Each subsequent one will be displayed
+on top of all the previous ones (see `CGHide` for how to hide them).
+
+
+### `CGHide`
+
+`ichortower.ECC_CGHide [index] [transition:type,duration[,x,y]] [wait]`
+
+This command hides an image that was previously displayed using `CGShow`. All
+of its arguments are optional: if none are given, this simply hides the most
+recently shown CG, reversing its transition (if applicable) so that it plays
+the reverse of the original animation. If you want to use a different
+transition, you can specify it here in exactly the same format as given above
+for `CGShow` in order to override the one it used before.
+
+The `index` argument is 0-based and tells ECC which CG to hide, if you desire
+to hide them in a different order: `0` is always the bottom-most CG, and the
+index counts up from there. **Note**: when a CG is hidden and its hiding
+transition completes, it will be removed from the list *and the indexes of all
+remaining CGs will decrease accordingly*. Make sure you plan for this if you
+want to get fancy with your ordering.
+
+Finally, like with `CGShow`, the `wait` argument takes no parameters and tells
+ECC to block the event loop until the outro transition completes and the CG is
+fully hidden.
+
+
+# World Control
 
 
 ### `WorldAdvanceTime`
@@ -615,7 +712,7 @@ tile coordinates of where to overlay it (the top-left corner, just like you
 would specify in e.g. a Content Patcher pack).
 
 
-## Conditional Execution
+# Conditional Execution
 
 
 ### `If`/`ElseIf`/`Else`/`EndIf`
@@ -671,7 +768,7 @@ blocks are parsed for execution, so they are "real time" and may reflect
 changes to game state that have occurred earlier in the event.
 
 
-## Repeat Blocks
+# Repeat Blocks
 
 These commands let you repeat a section of your event some number of times,
 or for a certain amount of time. **They cannot be nested**, so do not attempt
@@ -737,7 +834,7 @@ the time argument is a *minimum* duration, and the actual runtime may
 Declares the end of a repeat block. Takes no arguments.
 
 
-## Event Variables
+# Event Variables
 
 This command and game state query are intended for use with the Conditional
 Execution blocks (see above). You can use them to store and manipulate integer
@@ -1046,7 +1143,7 @@ I suppose you could use it to do basic math in dialogue elsewhere, but
 accessing the event vars is the real purpose.
 
 
-## Vanilla Command Notes
+# Vanilla Command Notes
 
 There are some vanilla commands which cause problems when used in streams
 outside of the main command list. Whenever possible, the Codex will
