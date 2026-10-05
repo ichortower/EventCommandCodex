@@ -66,6 +66,7 @@ internal class CG
             DrawColor = drawColor,
             LetterboxColor = letterboxColor,
             Scaling = scaling,
+            SourceRect = sourceRect,
         };
         item.CalculateRects();
         ActiveCGs.Add(item);
@@ -344,7 +345,7 @@ internal class CG
             letterboxRect.Y -= letterboxRect.Height / 2;
 
             sb.Draw(Game1.staminaRect, letterboxRect, null, letterboxColor);
-            sb.Draw(item.Texture, destRect, null, drawColor);
+            sb.Draw(item.Texture, destRect, item.SourceRect, drawColor);
         }
     }
 
@@ -365,14 +366,18 @@ internal class CGItem
     public int Timer = 0;
     public Color DrawColor = Color.White;
     public Color LetterboxColor = Color.Transparent;
+    public Rectangle SourceRect = new(0, 0, 0, 0);
     public Rectangle OutPosition = new();
     public Rectangle AwayPosition = new();
 
     public void CalculateRects()
     {
+        if (SourceRect.IsEmpty) {
+            SourceRect = new(0, 0, Texture.Width, Texture.Height);
+        }
         // first figure out the goal width/height
-        float xFactor = (float)Game1.viewport.Width / (float)Texture.Width;
-        float yFactor = (float)Game1.viewport.Height / (float)Texture.Height;
+        float xFactor = (float)Game1.viewport.Width / (float)SourceRect.Width;
+        float yFactor = (float)Game1.viewport.Height / (float)SourceRect.Height;
         if (Scaling.IntegerOnly) {
             xFactor = MathF.Floor(xFactor);
             yFactor = MathF.Floor(yFactor);
@@ -381,23 +386,23 @@ internal class CGItem
         switch (Scaling.Type) {
         case CGScalingType.Cover:
             matchFactor = MathF.Max(xFactor, yFactor);
-            OutPosition.Width = (int)(matchFactor * Texture.Width);
-            OutPosition.Height = (int)(matchFactor * Texture.Height);
+            OutPosition.Width = (int)(matchFactor * SourceRect.Width);
+            OutPosition.Height = (int)(matchFactor * SourceRect.Height);
             break;
         case CGScalingType.Stretch:
-            OutPosition.Width = (int)(xFactor * Texture.Width);
-            OutPosition.Height = (int)(yFactor * Texture.Height);
+            OutPosition.Width = (int)(xFactor * SourceRect.Width);
+            OutPosition.Height = (int)(yFactor * SourceRect.Height);
             break;
         case CGScalingType.Absolute:
             matchFactor = (Scaling.IntegerOnly ? MathF.Floor(Scaling.Scale) : Scaling.Scale);
-            OutPosition.Width = (int)(matchFactor * Texture.Width);
-            OutPosition.Height = (int)(matchFactor * Texture.Height);
+            OutPosition.Width = (int)(matchFactor * SourceRect.Width);
+            OutPosition.Height = (int)(matchFactor * SourceRect.Height);
             break;
         case CGScalingType.Fit:
         default:
             matchFactor = MathF.Min(xFactor, yFactor);
-            OutPosition.Width = (int)(matchFactor * Texture.Width);
-            OutPosition.Height = (int)(matchFactor * Texture.Height);
+            OutPosition.Width = (int)(matchFactor * SourceRect.Width);
+            OutPosition.Height = (int)(matchFactor * SourceRect.Height);
             break;
         }
         // goal x/y are always center, because we offset at draw time (scale from center)
