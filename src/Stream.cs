@@ -70,6 +70,10 @@ internal class Stream
             context.LogErrorAndSkip(error);
             return;
         }
+        if (streamId.StartsWithIgnoreCase("ECC")) {
+            context.LogErrorAndSkip($"stream id '{streamId}' is not permitted: 'ECC' is reserved");
+            return;
+        }
 
         if (!Streams.New(evt, streamId, commands.ToArray())) {
             context.LogError($"stream id '{streamId}' currently in use");

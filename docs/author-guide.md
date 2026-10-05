@@ -169,12 +169,17 @@ ahead through the command list looking for a matching `StreamEnd` command, and
 gives the intervening commands over to the new stream to begin executing (they
 will not actually execute until the stream's event loop reaches them).
 
-The id value can be any string, but it must not already be in use by another
-active stream within this event: attempting to reuse an active id will error
-out, and the new stream will be discarded. Once a stream has completed or
-halted, it becomes inactive, and you may reuse its id with a new `StreamStart`
-command to replace it; just make sure you don't have any future commands that
-need to control the old stream!
+The id value can be any string, subject to two conditions:
+
+1. it must not start with 'ECC' (case-insensitive; reserved for internal use)
+2. it must not already be in use by another active stream
+
+If the given id is invalid for one of the above reasons, the new stream will
+be discarded.
+
+Once a stream has completed or halted, it becomes inactive, and you may reuse
+its id with a new `StreamStart` command to replace it; just make sure you don't
+have any future commands that need to control the old stream!
 
 After starting a stream, you use the same id you gave it in order to issue
 commands from any other stream (`StreamAwait`, `StreamHalt`, etc.).
@@ -851,10 +856,9 @@ in some situation), or to keep track of a running total, or things like that.
 
 When picking a variable name, there are a few restrictions:
 
-* it must be **alphanumeric only** ([a-zA-Z0-9])
-* it must contain at least one letter ([a-zA-Z])
-* it must not start with 'ECC' (case-insensitive; this is to prevent
-    collisions with planned future features)
+1. it must not start with 'ECC' (case-insensitive; reserved for internal use)
+2. it must be **alphanumeric only** ([a-zA-Z0-9])
+3. it must contain at least one letter ([a-zA-Z])
 
 Other than those, you can choose whatever you like. **Variable names are
 case-sensitive**.

@@ -23,7 +23,7 @@ internal class Variable
             return;
         }
         if (varName.StartsWithIgnoreCase("ECC")) {
-            context.LogErrorAndSkip($"variable name must not start with 'ECC'");
+            context.LogErrorAndSkip($"variable name '{varName}' is not permitted: 'ECC' is reserved");
             return;
         }
         if (args.Length < 3) {
