@@ -346,7 +346,7 @@ situation, you will need to manually use ECC's replacement.
 
 ### `Speak`
 
-`ichortower.ECC_Speak <actor> <text-or-translation-key> [duration]`
+`ichortower.ECC_Speak <actor> <text-or-translation-key> [delay|duration]`
 
 A replacement for `speak`, which misbehaves when used in a stream. The actor
 and text/key arguments are the same as vanilla, but the optional extra argument
