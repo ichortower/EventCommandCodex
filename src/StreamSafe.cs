@@ -1,5 +1,6 @@
 using StardewValley;
 using StardewValley.Extensions;
+using StardewValley.Quests;
 using System;
 using System.Collections.Generic;
 
@@ -147,8 +148,20 @@ internal class StreamSafe
 
     public static void command_Message(SEvent evt, string[] args, EventContext context)
     {
-        context.LogErrorAndSkip($"this command should not be executed. Please make sure that" +
-                " you do not use the 'message' command inside a stream block");
+        if (!ArgUtility.TryGet(args, 1, out var dialogue, out var error, allowBlank: true)) {
+            context.LogErrorAndSkip(error);
+            return;
+        }
+        if (Game1.dialogueUp || Game1.activeClickableMenu is not null) {
+            return;
+        }
+        Game1.drawDialogueNoTyping(Game1.parseText(dialogue));
+        Game1.afterDialogues += delegate {
+            if (!Game1.isFestival() || !Game1.currentLocation.currentEvent.canMoveAfterDialogue()) {
+                --Game1.currentLocation.currentEvent.CurrentCommand;
+            }
+            ++evt.CurrentCommand;
+        };
     }
 
 
@@ -178,8 +191,71 @@ internal class StreamSafe
 
     public static void command_Speak(SEvent evt, string[] args, EventContext context)
     {
-        context.LogErrorAndSkip($"this command should not be executed. Please make sure that" +
-                " you do not use the 'speak' command inside a stream block");
+        if (Game1.dialogueUp) {
+            return;
+        }
+        bool skipReset = false;
+        if (evt.IsStatus(StreamStatus.AwaitingDelay)) {
+            if (evt.TickDownDelayTimer(Game1.currentGameTime)) {
+                evt.SetStatus(StreamStatus.Active);
+                skipReset = true;
+            }
+            else {
+                return;
+            }
+        }
+        if (!ArgUtility.TryGet(args, 1, out string actorName, out string error, allowBlank: true) ||
+                !ArgUtility.TryGet(args, 2, out string textOrTranslationKey, out error, allowBlank: true)) {
+            context.LogErrorAndSkip(error);
+            return;
+        }
+        int delayTime = 0;
+        for (int i = 3; i < args.Length; ++i) {
+            if (int.TryParse(args[i], out delayTime)) {
+                break;
+            }
+            else if (args[i].EqualsIgnoreCase("delay")) {
+                delayTime = 500;
+                break;
+            }
+            else {
+                context.LogError($"unknown argument '{args[i]}'", willSkip: false);
+            }
+        }
+        if (delayTime > 0 && !skipReset) {
+            evt.SetDelayTimer(delayTime);
+            evt.SetStatus(StreamStatus.AwaitingDelay);
+            return;
+        }
+        bool isOptionalNpc = false;
+        NPC actor = evt.getActorByName(actorName, out isOptionalNpc) ??
+                Game1.getCharacterFromName(actorName.TrimEnd('?'));
+        if (actor is null) {
+            context.LogErrorAndSkip($"no NPC found with name '{actorName}'", isOptionalNpc);
+            if (!isOptionalNpc) {
+                Game1.eventFinished();
+            }
+            return;
+        }
+        Game1.player.NotifyQuests((Quest quest) => quest.OnNpcSocialized(actor));
+        if (actor.CanSocialize && !Game1.player.friendshipData.ContainsKey(actor.Name)) {
+            Game1.player.friendshipData.Add(actor.Name, new Friendship(0));
+        }
+        Dialogue dialogue;
+        if (Game1.content.IsValidTranslationKey(textOrTranslationKey)) {
+            dialogue = new Dialogue(actor, textOrTranslationKey);
+        }
+        else {
+            dialogue = new Dialogue(actor, null, textOrTranslationKey);
+        }
+        actor.CurrentDialogue.Push(dialogue);
+        Game1.drawDialogue(actor);
+        Game1.afterDialogues += delegate {
+            if (!Game1.isFestival() || !Game1.currentLocation.currentEvent.canMoveAfterDialogue()) {
+                --Game1.currentLocation.currentEvent.CurrentCommand;
+            }
+            ++evt.CurrentCommand;
+        };
     }
 
 
@@ -267,7 +343,7 @@ internal class StreamSafe
             return input;
         }
         args[0] = $"{Main.ModId}_Speak";
-        string res = $"{args[0]} {args[1]} \"{string.Join(" ", args[2..])}\"";
+        string res = $"{args[0]} {args[1]} \"{string.Join(" ", args[2..])}\" delay";
         Log.Debug($"transformed: {input} -> {res}");
         return res;
     }

@@ -18,7 +18,9 @@ This document explains how to use the event commands added by this mod.
 * [Stream-Safe Command Replacements](#stream-safe-command-replacements)
   * [Emote](#emote)
   * [FaceDirection](#facedirection)
+  * [Message](#message)
   * [Pause](#pause)
+  * [Speak](#speak)
 * [Actor Control](#actor-control)
   * [ActorPathfind](#actorpathfind)
   * [ActorAwaitMovement](#actorawaitmovement)
@@ -317,6 +319,16 @@ a delay of that many milliseconds. Like `Emote`, if the delay argument is
 omitted, the default behavior is **not to block** after facing the actor.
 
 
+### `Message`
+
+`ichortower.ECC_Message <text>`
+
+A replacement for `message`, which misbehaves when used in a stream. It works
+exactly like the vanilla command, except for the misbehavior, and if you omit
+the required parameter it will error once and proceed instead of softlocking
+and spamming your SMAPI console.
+
+
 ### `Pause`
 
 `ichortower.ECC_Pause <int> [int...]`
@@ -324,6 +336,24 @@ omitted, the default behavior is **not to block** after facing the actor.
 A replacement for `pause`, which does not work in streams. Unlike `pause`,
 this one accepts any number of integer arguments as pause durations, and will
 choose one of them at random.
+
+**Note**: the vanilla `pause` command uses a global timer. In addition to its
+other properties which cause it to break streams, this timer *does not tick*
+when a menu or dialogue box is open, so a stream-safe Message or Speak
+command will cause a `pause` in the main command list to block. In this
+situation, you will need to manually use ECC's replacement.
+
+
+### `Speak`
+
+`ichortower.ECC_Speak <actor> <text-or-translation-key> [duration]`
+
+A replacement for `speak`, which misbehaves when used in a stream. The actor
+and text/key arguments are the same as vanilla, but the optional extra argument
+works like ECC's `faceDirection` replacement: you can use the string `delay`
+to insert the standard delay of 500 milliseconds, or you can use an integer to
+delay for a custom number of milliseconds (like with regular `speak`, the delay
+occurs *before* the dialogue box opens).
 
 
 # Actor Control
@@ -1186,17 +1216,10 @@ your `faceDirection` command will be replaced as follows:
 ### `message`
 
 To proceed after the dialogue box closes, this command relies on `DialogueBox`
-being hardcoded to advance the main command list. To make matters worse, it
-also uses the global pause timer to insert a short delay, so it is not suitable
-for use in streams.
-
-There is no substitute available at this time. If used in a stream, it will be
-replaced as follows:
+being hardcoded to advance the main command list. In a stream, your `message`
+command will be replaced as follows:
 
 `'message <text>' -> 'ichortower.ECC_Message <text>'`
-
-... but executing that command will cause an error (this is deliberate, in
-order to warn you that your script is malformed).
 
 ### `pause`
 
@@ -1206,6 +1229,10 @@ command will be replaced as follows:
 
 `'pause <ms>' -> 'ichortower.ECC_Pause <ms>'`
 
+**Reminder**: the vanilla `pause` command's global timer *does not tick down*
+while any menu or dialogue box is open, so you may need to use ECC's
+replacement directly if you have dialogue boxes in your streams.
+
 ### `quickQuestion`
 
 In order to execute the embedded scripts, this command injects them hardcodedly
@@ -1213,12 +1240,10 @@ into the main command list. There is no substitute available at this time.
 
 ### `speak`
 
-Just like `message`, this uses `DialogueBox` and there is no substitute for its
-hardcoding at this time. If used in a stream, it will be replaced as follows:
+Just like `message`, this uses `DialogueBox` and relies on its hardcoded index
+advance. If used in a stream, it will be replaced as follows:
 
-`'speak <actor> <dialogue>' -> 'ichortower.ECC_Speak <actor> <dialogue>'`
-
-... but executing that command will cause an error, just like with `message`.
+`'speak <actor> <dialogue>' -> 'ichortower.ECC_Speak <actor> <dialogue> delay'`
 
 ### `speed`
 
