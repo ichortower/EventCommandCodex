@@ -47,8 +47,8 @@ This document explains how to use the event commands added by this mod.
   * [If/ElseIf/Else/EndIf](#ifelseifelseendif)
 * [Repeat Blocks](#repeat-blocks)
   * [RepeatCount](#repeatcount)
-  * [RepeatTime](#repeatcount)
-  * [EndRepeat](#endrepeat)
+  * [RepeatTime](#repeattime)
+  * [RepeatEnd](#repeatend)
 * [Event Variables](#event-variables)
   * [VarSet](#varset)
   * [VAR_QUERY](#var_query)
@@ -338,8 +338,8 @@ this one accepts any number of integer arguments as pause durations, and will
 choose one of them at random.
 
 **Note**: the vanilla `pause` command uses a global timer. In addition to its
-other properties which cause it to break streams, this timer *does not tick*
-when a menu or dialogue box is open, so a stream-safe Message or Speak
+other properties which cause it to break streams, this timer *does not tick
+down* when a menu or dialogue box is open, so a stream-safe Message or Speak
 command will cause a `pause` in the main command list to block. In this
 situation, you will need to manually use ECC's replacement.
 
@@ -352,8 +352,8 @@ A replacement for `speak`, which misbehaves when used in a stream. The actor
 and text/key arguments are the same as vanilla, but the optional extra argument
 works like ECC's `faceDirection` replacement: you can use the string `delay`
 to insert the standard delay of 500 milliseconds, or you can use an integer to
-delay for a custom number of milliseconds (like with regular `speak`, the delay
-occurs *before* the dialogue box opens).
+delay for a custom number of milliseconds, or omit it to have no delay at all.
+Like with regular `speak`, the delay occurs *before* the dialogue box opens.
 
 
 # Actor Control
@@ -815,7 +815,7 @@ to do that, but they can safely be used in streams.
 `ichortower.ECC_RepeatCount <number>`
 
 This command declares the start of a block which should be repeated a certain
-number of times. All of the commands between this and the next `EndRepeat`
+number of times. All of the commands between this and the next `RepeatEnd`
 command will be executed repeatedly. The `number` argument should be an
 integer.
 
@@ -826,11 +826,11 @@ ichortower.ECC_RepeatCount 5
 pause 400
 emote Abigail 16
 speak Abigail "What? No way!$u"
-ichortower.ECC_EndRepeat
+ichortower.ECC_RepeatEnd
 ```
 
 This is not quite equivalent to just listing those commands 5 times in a row,
-since one frame will be consumed executing the `EndRepeat` command each
+since one frame will be consumed executing the `RepeatEnd` command each
 iteration, but it's mostly equivalent.
 
 
@@ -849,7 +849,7 @@ ichortower.ECC_RepeatTime 12500
 pause 400
 emote Abigail 16
 speak Abigail "What? No way!$u"
-ichortower.ECC_EndRepeat
+ichortower.ECC_RepeatEnd
 ```
 
 This block will be repeated until 12.5 seconds (total) have elapsed. This may
@@ -862,9 +862,9 @@ the time argument is a *minimum* duration, and the actual runtime may
 (significantly) exceed it.
 
 
-### EndRepeat
+### RepeatEnd
 
-`ichortower.ECC_EndRepeat`
+`ichortower.ECC_RepeatEnd`
 
 Declares the end of a repeat block. Takes no arguments.
 
@@ -1252,3 +1252,8 @@ When used with a farmer, the speed change is local to the stream, and movements
 in other streams will not see the value. There is no substitute, so you must be
 aware of the behavior when using this command.
 
+### `splitSpeak`
+
+This command works just like `speak` (relying on `DialogueBox`'s hardcoding),
+but I have not implemented a replacement for it, since I have never encountered
+it in the wild.

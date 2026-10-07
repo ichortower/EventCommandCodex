@@ -31,7 +31,7 @@ internal class RepeatBlock
         ++evt.CurrentCommand;
     }
 
-    public static void command_EndRepeat(SEvent evt, string[] args, EventContext context)
+    public static void command_RepeatEnd(SEvent evt, string[] args, EventContext context)
     {
         int targetIndex = evt.GetRepeatAnchor();
         if (targetIndex == -1) {
