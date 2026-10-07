@@ -333,6 +333,11 @@ exactly like the vanilla command, except for the misbehavior, and if you omit
 the required parameter it will error once and proceed instead of softlocking
 and spamming your SMAPI console.
 
+**Note**: even though this version of `message` (and `speak`, below) is safe
+to use in streams, it and its vanilla counterpart *will block* if there is
+another dialogue box open in any other stream; the game does not support
+having more than one open at once.
+
 
 ### `Pause`
 
@@ -360,6 +365,9 @@ to insert the standard delay of 500 milliseconds, or you can use an integer to
 delay for a custom number of milliseconds, or omit it to have no delay at all.
 Like with regular `speak`, the delay occurs *before* the dialogue box opens.
 
+**Note**: Like `Message`, above, only one dialogue box can be open at once, so
+this will block if another stream is displaying a speak or message box.
+
 
 
 # Simultaneous Commands
@@ -384,12 +392,17 @@ each listed command will be independently executed, all in parallel, and when
 they are all done, the event will continue.
 
 As normal for parallel execution (see Streams, above), you should be aware of
-behavior that might collide.
+behavior that might collide, and you must avoid commands that break streams
+and do not have stream-safe replacements (e.g. `quickQuestion`).
 
-**Note**: Do not attempt to nest Merge blocks (but why would you?). You also
-must not attempt to define a Stream block inside a Merge block (your event will
-break), but you can define a stream elsewhere and use `StreamAwait` as one of
-your Merge commands.
+**Note**: This command scans ahead for the matching `MergeEnd` and does not
+have special handling for other types of block command (`Repeat`, `Stream`,
+`Merge`, etc.), so do not attempt to define any type of block inside of a
+Merge block: your event *will* break.
+
+However, it is totally fine to use a Merge block inside of a stream. And if
+you need to put a stream inside a merge for some reason, you can define it
+elsewhere and use `StreamAwait` as one of your merge commands.
 
 
 ### `MergeEnd`
