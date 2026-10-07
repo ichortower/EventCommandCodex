@@ -21,6 +21,9 @@ This document explains how to use the event commands added by this mod.
   * [Message](#message)
   * [Pause](#pause)
   * [Speak](#speak)
+* [Simultaneous Commands](#simultaneous-commands)
+  * [Merge](#merge)
+  * [MergeEnd](#mergeend)
 * [Actor Control](#actor-control)
   * [ActorPathfind](#actorpathfind)
   * [ActorAwaitMovement](#actorawaitmovement)
@@ -56,6 +59,7 @@ This document explains how to use the event commands added by this mod.
 * [Vanilla Command Notes](#vanilla-command-notes)
 
 
+
 # General Notes
 
 Here are a few terms and things to know to help you read this document.
@@ -85,6 +89,7 @@ stands for in a particular command.
 
 For example, `ViewportMove` has an optional argument `wait`. It expects to
 find the string "wait" there, not the string "true".
+
 
 
 # Stream Control
@@ -356,6 +361,48 @@ delay for a custom number of milliseconds, or omit it to have no delay at all.
 Like with regular `speak`, the delay occurs *before* the dialogue box opens.
 
 
+
+# Simultaneous Commands
+
+If you're like me, you may have been excited to discover vanilla's
+`beginSimultaneousCommand`/`endSimultaneousCommand` pairing, and pictured how
+they might work, only to discover that they fulfill their promise only for a
+narrow subset of event commands. Streams (see above) are my answer to that
+problem in general, but I have also introduced these commands to provide a
+way to accomplish what these commands sound like they should do.
+
+
+### `Merge`
+
+`ichortower.ECC_Merge`
+
+This command takes no parameters, and declares the start of a simultaneous
+command block. Starting with the next command and proceeding until the matching
+`MergeEnd` command, every command will be automatically placed in its own
+stream, and the event loop will then await all of the streams. Put another way,
+each listed command will be independently executed, all in parallel, and when
+they are all done, the event will continue.
+
+As normal for parallel execution (see Streams, above), you should be aware of
+behavior that might collide.
+
+**Note**: Do not attempt to nest Merge blocks (but why would you?). You also
+must not attempt to define a Stream block inside a Merge block (your event will
+break), but you can define a stream elsewhere and use `StreamAwait` as one of
+your Merge commands.
+
+
+### `MergeEnd`
+
+`ichortower.ECC_MergeEnd`
+
+This command takes no parameters, and declares the end of a simultaneous
+command block.
+
+Executing it is an error, just like `StreamEnd`.
+
+
+
 # Actor Control
 
 These commands give you more flexibility when controlling actors (characters).
@@ -450,6 +497,7 @@ But if you are already awaiting the movement in another stream, `next` will
 suffice.
 
 
+
 # Viewport Control
 
 These commands are intended to replace `viewport move` with a version that I
@@ -529,6 +577,7 @@ The `move` and `shake` arguments are parsed just like `ViewportAwait`; leaving
 them out will default to stopping both queues.
 
 
+
 # Ambient Light Control
 
 Although vanilla has the `ambientLight` command which lets you set the ambient
@@ -592,6 +641,7 @@ This command blocks until all queued ambient light shifts have completed.
 
 This command immediately halts all ongoing ambient light shifts and empties
 the light shift queue.
+
 
 
 # Displaying CGs
@@ -688,6 +738,7 @@ ECC to block the event loop until the outro transition completes and the CG is
 fully hidden.
 
 
+
 # World Control
 
 
@@ -747,6 +798,7 @@ tile coordinates of where to overlay it (the top-left corner, just like you
 would specify in e.g. a Content Patcher pack).
 
 
+
 # Conditional Execution
 
 
@@ -801,6 +853,7 @@ You *should* be able to nest these commands, but I haven't tested that yet.
 **Note:** the game state queries that drive this are evaluated when the
 blocks are parsed for execution, so they are "real time" and may reflect
 changes to game state that have occurred earlier in the event.
+
 
 
 # Repeat Blocks
@@ -867,6 +920,7 @@ the time argument is a *minimum* duration, and the actual runtime may
 `ichortower.ECC_RepeatEnd`
 
 Declares the end of a repeat block. Takes no arguments.
+
 
 
 # Event Variables
@@ -1175,6 +1229,7 @@ only on the main command list).
 
 I suppose you could use it to do basic math in dialogue elsewhere, but
 accessing the event vars is the real purpose.
+
 
 
 # Vanilla Command Notes
