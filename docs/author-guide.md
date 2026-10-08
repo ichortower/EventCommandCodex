@@ -662,7 +662,7 @@ the light shift queue.
 
 ### `CGShow`
 
-`ichortower.ECC_CGShow <texture> [sourceRect:x,y,w,h] [transition:type,duration[,x,y]] [scaling:type[,i]] [color:#color] [letterbox:#color] [wait]`
+`ichortower.ECC_CGShow <texture> [sourceRect:x,y,w,h] [transition:type,duration[,x,y]] [scaling:type[,x,y,i]] [offset:x,y] [color:#color] [letterbox:#color] [wait]`
 
 This command displays an image of your choosing on top of the world layer and
 below the UI layer, intended to be used for full-screen or otherwise dramatic
@@ -694,6 +694,9 @@ descriptions for details, but in all cases please take care not to use spaces.
     vector pointing to the initial offscreen position. For example, `,-1,-1`
     means equal amounts left and up, while `,2,5` means two parts right to five
     parts down.
+
+  The default value for the transition is `transition:fade,1000`, which fades
+  the image into view over 1000 milliseconds.
 - `scaling` specifies how the image should be displayed once the transition is
   over. The required type parameter must be one of the following:
   - `fit`: the image will fit entirely on screen, preserving aspect ratio
@@ -702,15 +705,33 @@ descriptions for details, but in all cases please take care not to use spaces.
     (most likely, the image will be cropped/cut off).
   - `stretch`: fill the entire screen, disregarding aspect ratio
     (most likely, the image will be stretched or squashed).
-  - any floating-point number: use an absolute scaling factor
+  - `abs`: use absolute scaling values. This scaling type *requires* at least
+    one floating-point parameter: give just one (e.g. `scaling:abs,4`) to scale
+    X and Y by the same amount, or give two (e.g. `scaling:abs,2.8,2.4`) to
+    scale them differently. This type honors the `i` optional argument, but
+    you could just specify whole numbers instead so it's not that useful here.
 
-  The optional parameter `i` means to use integer scaling only; for example, if
-  you set an image to `fit` and that requires a scale of 3.221, it will be
-  displayed at 3x instead.
+  The optional parameter `i` means to use integer scaling only; for example,
+  the argument `scaling:cover,i` might calculate a scale of 3.221 to fully
+  cover the screen, but will use 3.0 instead.
 
-  So, for example, you might give the argument `scaling:fit,i`, which would
-  scale the image as much as possible so that it fits entirely on screen, while
-  also using an integer scaling factor.
+  The default value for the scaling is `scaling:fit,i`, which scales the image
+  as much as possible so it fits entirely on screen, while also using an
+  integer scaling factor.
+- `offset` is used to move the area on screen where the image will display. It
+  expects two parameters in the order `x,y`, both floating-point, representing
+  the distance horizontally and vertically, respectively, to move the target
+  rectangle.
+
+  These distances are measured in *multiples of image width/height*. So, for
+  example, `offset:0.5,0.2` means to move the image to the right by half of
+  its scaled width, and down by 20% of its scaled height. Likewise,
+  `offset:-1,-1` would mean to move it left one whole width and up one whole
+  height.
+
+  This is probably most useful when also using `scaling:abs` and showing
+  multiple CGs at once, so you can see them all instead of having them in a
+  stack in the center of the screen.
 - `color` is used to tint the image by setting the draw color (as opposed to
   the default white). The color value parameter can be an RGB or RGBA hex code
   `#rrggbb` or `#rrggbbaa`, or it can be
@@ -743,8 +764,8 @@ The `index` argument is 0-based and tells ECC which CG to hide, if you desire
 to hide them in a different order: `0` is always the bottom-most CG, and the
 index counts up from there. **Note**: when a CG is hidden and its hiding
 transition completes, it will be removed from the list *and the indexes of all
-remaining CGs will decrease accordingly*. Make sure you plan for this if you
-want to get fancy with your ordering.
+remaining CGs above it will decrease accordingly*. Make sure you plan for this
+if you want to get fancy with your ordering.
 
 Finally, like with `CGShow`, the `wait` argument takes no parameters and tells
 ECC to block the event loop until the outro transition completes and the CG is

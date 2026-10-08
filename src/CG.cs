@@ -16,15 +16,20 @@ internal class CG
 {
     public static void command_CGShow(SEvent evt, string[] args, EventContext context)
     {
-        // CGShow <texture> [sourceRect:x,y,w,h] [transition:dur,type] [scaling:type] [color:color] [letterbox:color] [wait]
         if (!ArgUtility.TryGet(args, 1, out string texture, out string error)) {
             context.LogErrorAndSkip(error);
             return;
         }
         Rectangle sourceRect = new(0, 0, 0, 0);
         Color drawColor = Color.White;
-        CGScaling scaling = new();
-        CGTransition transition = new();
+        CGScaling scaling = new() {
+            IntegerOnly = true,
+        };
+        Vector2 offset = new();
+        CGTransition transition = new() {
+            Type = CGTransitionType.Fade,
+            Duration = 1000,
+        };
         Color letterboxColor = Color.Transparent;
         bool waitForTransition = false;
 
@@ -41,6 +46,11 @@ internal class CG
             }
             else if (arg.StartsWithIgnoreCase("scaling:")) {
                 if (!ParseScalingArg(arg, ref scaling, out error)) {
+                    Log.Warn(error);
+                }
+            }
+            else if (arg.StartsWithIgnoreCase("offset:")) {
+                if (!ParseOffsetArg(arg, ref offset, out error)) {
                     Log.Warn(error);
                 }
             }
@@ -66,6 +76,7 @@ internal class CG
             DrawColor = drawColor,
             LetterboxColor = letterboxColor,
             Scaling = scaling,
+            Offset = offset,
             SourceRect = sourceRect,
         };
         item.CalculateRects();
@@ -73,7 +84,7 @@ internal class CG
         StartCGTicker();
 
         if (waitForTransition && transition.Duration > 0) {
-            evt.InsertNextCommand($"pause {transition.Duration}");
+            evt.InsertNextCommand($"{Main.ModId}_Pause {transition.Duration}");
         }
         ++evt.CurrentCommand;
     }
@@ -121,7 +132,7 @@ internal class CG
         StartCGTicker();
 
         if (waitForTransition && transition.Duration > 0) {
-            evt.InsertNextCommand($"pause {transition.Duration}");
+            evt.InsertNextCommand($"{Main.ModId}_Pause {transition.Duration}");
         }
         ++evt.CurrentCommand;
     }
@@ -141,17 +152,44 @@ internal class CG
         else if (val.EqualsIgnoreCase("stretch")) {
             scaling.Type = CGScalingType.Stretch;
         }
-        else if (float.TryParse(val, out scaling.Scale)) {
+        else if (val.EqualsIgnoreCase("abs")) {
+            if (pieces.Length <= 1 || !float.TryParse(pieces[1], out scaling.Scale.X)) {
+                error = $"Argument '{arg}' requires a floating-point parameter.";
+                return false;
+            }
+            if (pieces.Length <= 2 || !float.TryParse(pieces[2], out scaling.Scale.Y)) {
+                scaling.Scale.Y = scaling.Scale.X;
+            }
             scaling.Type = CGScalingType.Absolute;
         }
         else {
             error = $"Argument '{arg}' could not be parsed: found value '{val}' but" +
-                    " expected one of 'fit', 'cover', 'stretch', or a floating-point value.";
+                    " expected one of 'fit', 'cover', 'stretch', or 'abs'.";
             return false;
         }
-        if (pieces.Length > 1 && pieces[1].EqualsIgnoreCase("i")) {
+        if (pieces.Length > 1 && pieces[^1].EqualsIgnoreCase("i")) {
             scaling.IntegerOnly = true;
         }
+        return true;
+    }
+
+
+    private static bool ParseOffsetArg(string arg, ref Vector2 offset, out string error)
+    {
+        error = "";
+        string[] pieces = arg[7..].Split(",");
+        if (pieces.Length < 2) {
+            error = $"Argument '{arg}' could not be parsed: expected 2 values" +
+                    $" but got {pieces.Length}";
+            return false;
+        }
+        if (!float.TryParse(pieces[0], out float x) ||
+                !float.TryParse(pieces[1], out float y)) {
+            error = $"Could not parse offset from '{arg[7..]}': could not" +
+                    " convert to floats.";
+            return false;
+        }
+        offset = new(x, y);
         return true;
     }
 
@@ -339,10 +377,12 @@ internal class CG
                                       Game1.viewport.Width, whdist),
                     (int)Utility.Lerp(item.AwayPosition.Height * Game1.viewport.Height / item.OutPosition.Height,
                                       Game1.viewport.Height, whdist));
-            destRect.X -= destRect.Width / 2;
-            destRect.Y -= destRect.Height / 2;
-            letterboxRect.X -= letterboxRect.Width / 2;
-            letterboxRect.Y -= letterboxRect.Height / 2;
+            // this applies the offset from any offset arg, and also moves
+            // up/left by half of width/height to account for zoom scaling
+            destRect.X -= (int)((0.5f - item.Offset.X) * destRect.Width);
+            destRect.Y -= (int)((0.5f - item.Offset.Y) * destRect.Height);
+            letterboxRect.X -= (int)((0.5f - item.Offset.X) * letterboxRect.Width);
+            letterboxRect.Y -= (int)((0.5f - item.Offset.Y) * letterboxRect.Height);
 
             sb.Draw(Game1.staminaRect, letterboxRect, null, letterboxColor);
             sb.Draw(item.Texture, destRect, item.SourceRect, drawColor);
@@ -363,6 +403,7 @@ internal class CGItem
     public Texture2D Texture = null;
     public CGTransition Transition = new();
     public CGScaling Scaling = new();
+    public Vector2 Offset = new();
     public int Timer = 0;
     public Color DrawColor = Color.White;
     public Color LetterboxColor = Color.Transparent;
@@ -394,9 +435,13 @@ internal class CGItem
             OutPosition.Height = (int)(yFactor * SourceRect.Height);
             break;
         case CGScalingType.Absolute:
-            matchFactor = (Scaling.IntegerOnly ? MathF.Floor(Scaling.Scale) : Scaling.Scale);
-            OutPosition.Width = (int)(matchFactor * SourceRect.Width);
-            OutPosition.Height = (int)(matchFactor * SourceRect.Height);
+            Vector2 clampedScale = new(MathF.Max(0f, Scaling.Scale.X), MathF.Max(0f, Scaling.Scale.Y));
+            if (Scaling.IntegerOnly) {
+                clampedScale.X = MathF.Floor(clampedScale.X);
+                clampedScale.Y = MathF.Floor(clampedScale.Y);
+            }
+            OutPosition.Width = (int)(clampedScale.X * SourceRect.Width);
+            OutPosition.Height = (int)(clampedScale.Y * SourceRect.Height);
             break;
         case CGScalingType.Fit:
         default:
@@ -474,7 +519,7 @@ internal enum CGTransitionDirection
 internal class CGScaling
 {
     public CGScalingType Type = CGScalingType.Fit;
-    public float Scale = 0f;
+    public Vector2 Scale = new(0f, 0f);
     public bool IntegerOnly = false;
 }
 
