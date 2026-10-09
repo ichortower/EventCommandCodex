@@ -734,10 +734,9 @@ descriptions for details, but in all cases please take care not to use spaces.
   stack in the center of the screen.
 - `color` is used to tint the image by setting the draw color (as opposed to
   the default white). The color value parameter can be an RGB or RGBA hex code
-  `#rrggbb` or `#rrggbbaa`, or it can be
+  `#rrggbb` or `#rrggbbaa`, or three or four comma-separated decimal values
+  `rrr,ggg,bbb` or `rrr,ggg,bbb,aaa` (0-255), or it can be
   [any valid MonoGame color name](https://github.com/ichortower/FontSmasher/blob/prod/docs/color-table.md).
-  At this time, decimal rgb(a) values are not supported (they would require
-  spaces).
 - `letterbox` takes a color value just like `color`, except it sets the color
   used to fill in any unused space around the image, filling the remainder of
   the screen with a solid color. By default, this is transparent, so there is
