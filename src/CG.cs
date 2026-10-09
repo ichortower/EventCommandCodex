@@ -5,6 +5,8 @@ using StardewValley;
 using StardewValley.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
 
 using Log = ichortower.TowerCore.Log;
 using Main = ichortower.TowerCore.Main;
@@ -39,10 +41,10 @@ internal class CG
                 waitForTransition = true;
             }
             else if (arg.StartsWithIgnoreCase("color:")) {
-                drawColor = Utility.StringToColor(arg[6..]) ?? Color.White;
+                drawColor = StringToColor(arg[6..]) ?? Color.White;
             }
             else if (arg.StartsWithIgnoreCase("letterbox:")) {
-                letterboxColor = Utility.StringToColor(arg[10..]) ?? Color.Transparent;
+                letterboxColor = StringToColor(arg[10..]) ?? Color.Transparent;
             }
             else if (arg.StartsWithIgnoreCase("scaling:")) {
                 if (!ParseScalingArg(arg, ref scaling, out error)) {
@@ -387,6 +389,60 @@ internal class CG
             sb.Draw(Game1.staminaRect, letterboxRect, null, letterboxColor);
             sb.Draw(item.Texture, destRect, item.SourceRect, drawColor);
         }
+    }
+
+    internal static Color? StringToColor(string raw)
+    {
+        raw = raw?.Trim();
+        if (string.IsNullOrEmpty(raw)) {
+            return null;
+        }
+        // r, g, b, a
+        int[] values = { 0, 0, 0, -1 };
+        if (raw.StartsWith("#")) {
+            if (raw.Length < 7) {
+                Log.Warn($"Color value too short: '{raw}'");
+                return null;
+            }
+            for (int i = 0; i < 4; ++i) {
+                if (1+2*(i+1) > raw.Length) {
+                    break;
+                }
+                if (!int.TryParse(raw.Substring(1+2*i, 2), NumberStyles.HexNumber, null, out values[i])) {
+                    Log.Warn($"Couldn't parse color value '{raw}'");
+                    return null;
+                }
+            }
+        }
+        else if (raw.Contains(',')) {
+            string[] nums = raw.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            if (nums.Length < 3) {
+                Log.Warn($"Color value not readable as rgb(a): '{raw}'");
+                return null;
+            }
+            for (int i = 0; i < 4 && i < nums.Length; ++i) {
+                if (!int.TryParse(nums[i], out int v)) {
+                    Log.Warn($"Couldn't parse color value '{raw}'");
+                    return null;
+                }
+                values[i] = Math.Max(0, Math.Min(v, 255));
+            }
+        }
+        else {
+            PropertyInfo item = typeof(Color).GetProperty(raw,
+                    BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            if (item is null) {
+                Log.Warn($"Color name '{raw}' not found");
+                return null;
+            }
+            return (Color)item.GetValue(null)!;
+        }
+
+        Color c = new(values[0], values[1], values[2]);
+        if (values[3] != -1) {
+            c *= ((float)values[3])/255f;
+        }
+        return c;
     }
 
     internal static System.EventHandler<UpdateTickedEventArgs> CGTransitionUpdate = null;
