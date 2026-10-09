@@ -29,18 +29,6 @@ internal sealed class ModMain : Mod
                 ichortower.ECC.World.traction_WorldAdvanceTime);
     }
 
-    [ConsoleCommand("ast", "directly eval an event variable string to test AST")]
-    public static void TestAst(string command, string[] args)
-    {
-        string input = string.Join(" ", args);
-        Log.Debug(input);
-        if (!ExprNode.EvalString(input, out string res, out string err)) {
-            Log.Error(err);
-            return;
-        }
-        Log.DebugWarn($"eval '{input}': result '{res}'");
-    }
-
     private static void RegisterCommands(Type t)
     {
         MethodInfo[] funcs = t.GetMethods(BindingFlags.Public | BindingFlags.Static);
