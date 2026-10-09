@@ -708,12 +708,12 @@ descriptions for details, but in all cases please take care not to use spaces.
   - `abs`: use absolute scaling values. This scaling type *requires* at least
     one floating-point parameter: give just one (e.g. `scaling:abs,4`) to scale
     X and Y by the same amount, or give two (e.g. `scaling:abs,2.8,2.4`) to
-    scale them differently. This type honors the `i` optional argument, but
+    scale them differently. This type honors the `i` optional parameter, but
     you could just specify whole numbers instead so it's not that useful here.
 
-  The optional parameter `i` means to use integer scaling only; for example,
-  the argument `scaling:cover,i` might calculate a scale of 3.221 to fully
-  cover the screen, but will use 3.0 instead.
+  The optional parameter `i` means to use integer scaling only (rounding down);
+  for example, the argument `scaling:cover,i` might calculate a scale of 3.221
+  to fully cover the screen, but will use 3.0 instead.
 
   The default value for the scaling is `scaling:fit,i`, which scales the image
   as much as possible so it fits entirely on screen, while also using an
