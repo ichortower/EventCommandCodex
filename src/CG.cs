@@ -299,8 +299,10 @@ internal class CG
         Log.Debug("Starting CG handlers");
         CGTransitionUpdate = TransitionHandler;
         CGDrawFunction = DrawHandler;
+        CGResizeFunction = ResizeHandler;
         Main.Helper.Events.GameLoop.UpdateTicked += CGTransitionUpdate;
         Main.Helper.Events.Display.RenderedWorld += CGDrawFunction;
+        Main.Helper.Events.Display.WindowResized += CGResizeFunction;
     }
 
     internal static void StopCGTicker()
@@ -311,8 +313,10 @@ internal class CG
         Log.Debug("Stopping CG handlers");
         Main.Helper.Events.GameLoop.UpdateTicked -= CGTransitionUpdate;
         Main.Helper.Events.Display.RenderedWorld -= CGDrawFunction;
+        Main.Helper.Events.Display.WindowResized -= CGResizeFunction;
         CGTransitionUpdate = null;
         CGDrawFunction = null;
+        CGResizeFunction = null;
         ActiveCGs.Clear();
     }
 
@@ -391,6 +395,13 @@ internal class CG
         }
     }
 
+    internal static void ResizeHandler(object sender, WindowResizedEventArgs resizedArgs)
+    {
+        foreach (CGItem item in ActiveCGs) {
+            item.CalculateRects();
+        }
+    }
+
     internal static Color? StringToColor(string raw)
     {
         raw = raw?.Trim();
@@ -447,6 +458,7 @@ internal class CG
 
     internal static System.EventHandler<UpdateTickedEventArgs> CGTransitionUpdate = null;
     internal static System.EventHandler<RenderedWorldEventArgs> CGDrawFunction = null;
+    internal static System.EventHandler<WindowResizedEventArgs> CGResizeFunction = null;
 
 
     internal static List<CGItem> ActiveCGs = new();
