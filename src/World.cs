@@ -210,7 +210,9 @@ internal class World
             ++changes;
         }
         if (changes > 0 && !revertQueued) {
-            evt.onEventFinished += delegate {
+            // as usual, register EventFinished to main event so cleanup runs
+            // if this is used in a stream
+            Game1.CurrentEvent.onEventFinished += delegate {
                 RevertMap(context.Location);
             };
             revertQueued = true;
@@ -236,7 +238,8 @@ internal class World
         Game1.currentLocation.ApplyMapOverride(asset, null, destRect);
         tempOverrides.Add(asset);
         if (!revertQueued) {
-            evt.onEventFinished += delegate {
+            // register to main event for reliable cleanup
+            Game1.CurrentEvent.onEventFinished += delegate {
                 RevertMap(context.Location);
             };
             revertQueued = true;
@@ -247,6 +250,7 @@ internal class World
 
     internal static void RevertMap(GameLocation loc)
     {
+        Log.Debug("Attempting to revert map");
         HashSet<string> amo = (HashSet<string>)
                 typeof(GameLocation).GetField("_appliedMapOverrides",
                     BindingFlags.NonPublic | BindingFlags.Instance)
