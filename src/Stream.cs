@@ -72,8 +72,8 @@ internal class Stream
             return;
         }
 
-        if (!Streams.New(evt, streamId, commands.ToArray())) {
-            context.LogError($"stream id '{streamId}' currently in use");
+        if (!Streams.New(evt, streamId, commands.ToArray(), out string err)) {
+            context.LogError(err);
         }
         ++evt.CurrentCommand;
     }
@@ -268,10 +268,16 @@ internal class Streams
 
     internal static bool CleanupQueued = false;
 
-    internal static bool New(SEvent source, string streamId, string[] commands)
+    internal static bool New(SEvent source, string streamId, string[] commands, out string err)
     {
+        err = "";
+        if (commands is null || commands.Length == 0) {
+            err = "command list must not be empty";
+            return false;
+        }
         if (OpenStreams.ContainsKey(streamId) &&
                 !OpenStreams[streamId].IsStatus(StreamStatus.Ended)) {
+            err = $"stream id '{streamId}' in use";
             return false;
         }
         SEvent stream = new();

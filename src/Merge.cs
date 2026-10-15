@@ -34,8 +34,8 @@ internal class Merge
         List<string> autoIds = new();
         for (i = 0; i < commands.Count; ++i) {
             string id = $"ECC_Merge_{GlobalMergeStreamIndex}";
-            if (!Streams.New(evt, id, new string[]{commands[i]})) {
-                context.LogErrorAndSkip("could not create internal stream. This shouldn't happen");
+            if (!Streams.New(evt, id, new string[]{commands[i]}, out string err)) {
+                context.LogErrorAndSkip(err);
                 return;
             }
             autoIds.Add(id);
