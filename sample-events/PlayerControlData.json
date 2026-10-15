@@ -1,0 +1,39 @@
+{
+    "ichortower.ECC_SamplePlayerControlSequence": {
+        "Stages": [
+            {
+                "Id": "ichortower.ECC_SampleStage1",
+                "ScriptOnBegin": [
+                    "message \"oh, come on\"",
+                    "--speak Abigail \"It's a simple thing. Run around here and touch the five flowers. Ready... go!\"",
+                    "ichortower.ECC_TemporaryMapTiles Back2 30 28 Landscape 257 Back2 31 21 Landscape 257 Back2 22 22 Landscape 257 Back2 19 27 Landscape 257 Back2 23 32 Landscape 257",
+                ],
+                "Dialogues": {
+                    "Abigail": {
+                        "Dialogue": "Hey. You're doing great! Keep going until you touch all five, okay?$h"
+                    }
+                },
+                "AdvanceConditions": [
+                    {
+                        "Type": "TileTouch",
+                        "Required": true,
+                        "Tiles": [
+                            { "X": 30, "Y": 28, "Script": ["@Sparkle"] },
+                            { "X": 31, "Y": 21, "Script": ["@Sparkle"] },
+                            { "X": 22, "Y": 22, "Script": ["@Sparkle"] },
+                            { "X": 19, "Y": 27, "Script": ["@Sparkle"] },
+                            { "X": 23, "Y": 32, "Script": ["@Sparkle"] },
+                        ],
+                    }
+                ],
+                "Scripts": {
+                    "Sparkle": [
+                        "ichortower.ECC_TemporaryMapTiles Back2 ${x} ${y} - -1",
+                        "playSound shwip",
+                    ]
+                }
+            }
+        ],
+        "Scripts": {}
+    }
+}

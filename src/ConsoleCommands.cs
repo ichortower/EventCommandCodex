@@ -1,5 +1,6 @@
 using ichortower.TowerCore;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Extensions;
 using System.Collections.Generic;
@@ -12,6 +13,10 @@ internal class ConsoleCommands
 {
 
     internal const string SampleFolderName = "SampleEvents";
+    internal const string SampleJsonName = "PlayerControlData.json";
+    internal static string SampleFolderPath => Path.Combine(Main.Helper.DirectoryPath, SampleFolderName);
+    // this one is not absolute because ModContentHelper expects (forces) a relative path
+    internal static string SampleSequenceFile => Path.Combine(SampleFolderName, SampleJsonName);
 
     #if DEBUG
     [ConsoleCommand("ast", "directly eval an event variable string to test AST")]
@@ -35,9 +40,10 @@ internal class ConsoleCommands
             return;
         }
         string[] files;
-        string dir = Path.Combine(Main.Helper.DirectoryPath, SampleFolderName);
         try {
-            files = Directory.GetFiles(dir);
+            files = Directory.GetFiles(SampleFolderPath).Where((path) => {
+                return !Path.GetFileName(path).EqualsIgnoreCase(SampleJsonName);
+            }).ToArray();
         }
         catch (DirectoryNotFoundException e) {
             Log.Warn(e.Message);
@@ -58,6 +64,12 @@ internal class ConsoleCommands
         if (files.Length == 0) {
             Log.Warn("No sample events found.");
             return;
+        }
+
+        // setting this flag here activates the sample data patch (see below)
+        if (!SampleEventRequested) {
+            Main.Helper.GameContent.InvalidateCache(PlayerControl.Data.AssetName);
+            SampleEventRequested = true;
         }
 
         string theOne = Utility.fuzzySearch(args[0], files);
@@ -87,6 +99,38 @@ internal class ConsoleCommands
         int y = 8;
         Utility.getDefaultWarpLocation(locationName, ref x, ref y);
         Game1.warpFarmer(req, x, y, Game1.player.FacingDirection);
+    }
+
+    internal static bool SampleEventRequested = false;
+
+    /*
+     * This is not a console command, but it patches in the appropriate
+     * player control data from the sample folder so that the player control
+     * sample event works when requested.
+     * But this patch is only enabled once a sample event is requested.
+     */
+    [SmapiEvent]
+    public static void AssetRequested(object sender, AssetRequestedEventArgs e)
+    {
+        if (!SampleEventRequested) {
+            return;
+        }
+        if (e.Name.IsEquivalentTo(PlayerControl.Data.AssetName)) {
+            try {
+                var sampleData = Main.Helper.ModContent.Load
+                        <Dictionary<string, PlayerControl.Sequence>>(SampleSequenceFile);
+                e.Edit((asset) => {
+                    var dict = asset.AsDictionary<string, PlayerControl.Sequence>();
+                    foreach (var entry in sampleData) {
+                        dict.Data[entry.Key] = entry.Value;
+                    }
+                });
+            }
+            catch (System.Exception err) {
+                Log.Warn(err.Message);
+                return;
+            }
+        }
     }
 
 }

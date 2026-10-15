@@ -10,6 +10,8 @@ install: smapi
 
 smapi:
 	dotnet build
+	install -d -m 755 "${MOD_DIR}/SampleEvents"
+	install -m 644 sample-events/* "${MOD_DIR}/SampleEvents"
 	install -m 644 LICENSE "${MOD_DIR}"
 
 clean:
