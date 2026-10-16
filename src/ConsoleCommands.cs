@@ -127,7 +127,7 @@ internal class ConsoleCommands
                 });
             }
             catch (System.Exception err) {
-                Log.Warn(err.Message);
+                Log.Warn(err.ToString());
                 return;
             }
         }

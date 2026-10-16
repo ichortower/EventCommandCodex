@@ -1,3 +1,4 @@
+using ichortower.TowerCore;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Extensions;
@@ -163,6 +164,24 @@ internal static class Extensions
 
 
     /*
+     * This is a classic swizzle, to cause streams to call the stream update
+     * function instead of the vanilla one (see impl and reasoning below).
+     */
+    [TargetMethod(typeof(SEvent), nameof(SEvent.Update))]
+    [PatchType(PatchTypes.Prefix)]
+    internal static bool StardewValley_Event_Update_Prefix(SEvent __instance,
+            GameLocation location, GameTime time)
+    {
+        if (Streams.OpenStreams.Values.Contains(__instance)) {
+            Log.Debug("stream updating");
+            __instance.UpdateStream(location, time);
+            return false;
+        }
+        return true;
+    }
+
+
+    /*
      * Unfortunate reimplementation of Event.Update, since there's no other way to sanely
      * run Update without setting off at least one unwanted side effect (UpdateBeforeNextCommand
      * in particular updates all NPCs, and we only want the main stream to do that, or else we
@@ -172,10 +191,6 @@ internal static class Extensions
      */
     internal static void UpdateStream(this SEvent evt, GameLocation location, GameTime time)
     {
-        if (evt.Equals(Game1.CurrentEvent)) {
-            evt.Update(location, time);
-            return;
-        }
         if ((bool) EventFinished.GetValue(evt)) {
             return;
         }
@@ -221,7 +236,10 @@ internal static class Extensions
                 s.update(time);
             }
         }
-        if (!evt.playerControlSequence) {
+        // vanilla checks for evt.playerControlSequence here. but we have to check
+        // our state object instead, since this is for streams and they *cannot*
+        // have that flag set (so any stream running during PC would force walking)
+        if (!PlayerControl.CurrentState.SequenceActive()) {
             evt.farmer.setRunning(isRunning: false);
         }
         if (evt.isFestival) {
