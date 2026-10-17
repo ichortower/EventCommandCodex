@@ -29,6 +29,7 @@ This document explains how to use the event commands added by this mod.
   * [ActorAwaitMovement](#actorawaitmovement)
   * [ActorAwaitAnimation](#actorawaitanimation)
   * [ActorHalt](#actorhalt)
+  * [ActorSnapToGrid](#actorsnaptogrid)
 * [Viewport Control](#viewport-control)
   * [ViewportMove](#viewportmove)
   * [ViewportShake](#viewportshake)
@@ -509,6 +510,15 @@ may not halt correctly without `ActorAwaitMovement` to help unstick them.
 But if you are already awaiting the movement in another stream, `next` will
 suffice.
 
+
+### `ActorSnapToGrid`
+
+`ichortower.ECC_ActorSnapToGrid <actor> [actor...]`
+
+This command shifts the position of all named actors, snapping them back to an
+even tile position. This is useful if, for example, you are trying to use the
+`move` command and your actors are void walking, or if you have finished a
+player control segment and the farmer player might be standing any old where.
 
 
 # Viewport Control

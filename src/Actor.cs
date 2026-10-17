@@ -173,6 +173,36 @@ internal class Actor
 
 
     /*
+     * ichortower.ECC_ActorSnapToGrid <actor> [actor...]
+     *
+     * Snaps one or more named actors back to the tile grid. This is useful in
+     * situations like:
+     *  - you have done some positionOffsets
+     *  - you are trying to use `move` but your npc is void walking
+     *  - you have done a PlayerControl segment and the player could be anywhere
+     */
+    public static void command_ActorSnapToGrid(SEvent evt, string[] args, EventContext context)
+    {
+        if (args.Length <= 1) {
+            context.LogErrorAndSkip("requires at least one actor argument");
+            return;
+        }
+
+        List<string> puppets = new();
+        for (int i = 1; i < args.Length; ++i) {
+            string actorName = args[i];
+            Character actor = evt.getCharacterByName(actorName);
+            if (actor is null) {
+                context.LogErrorAndSkip($"no actor found with name '{actorName}'");
+                return;
+            }
+            actor.setTileLocation(evt.OffsetTile(actor.Tile));
+        }
+        ++evt.CurrentCommand;
+    }
+
+
+    /*
      * ichortower.ECC_ActorPathfind <actor> <x> <y> <facingDirection> [wait]
      *
      * Tells an event actor to move to a specific tile coordinate, but relies on the
