@@ -218,20 +218,18 @@ internal static class CurrentState
                 }
                 ConditionStates[i].ItemsSatisfied[j] = true;
                 string[] script = GetScript(i, j, type);
-                if (script is not null && script.Length > 0) {
-                    if (Sequence.GetScript(CurrentStageIndex, script, out string[] ret, out string error)) {
-                        // npc name can be null, which is fine
-                        string npcName = GetNpcName(i, j, type);
-                        ret = ret.Select(s => ReplaceTokens(s, source, npcName)).ToArray();
-                        string streamId = $"ECC_{CurrentState.Id}_" +
-                                $"Stage{CurrentState.CurrentStageIndex}_" +
-                                $"Condition{i}_Item{j}";
-                        if (!Streams.New(Game1.CurrentEvent, streamId, ret, out error)) {
-                            Log.Warn(error);
-                        }
-                        // TODO figure out how to await this when stage ends?
-                    }
-                    else {
+                if (!Sequence.GetScript(CurrentStageIndex, script,
+                        out string[] ret, out string error)) {
+                    Log.Warn(error);
+                }
+                else if (ret?.Length > 0 is true) {
+                    // npc name can be null, which is fine
+                    string npcName = GetNpcName(i, j, type);
+                    ret = ret.Select(s => ReplaceTokens(s, source, npcName)).ToArray();
+                    string streamId = $"ECC_{CurrentState.Id}_" +
+                            $"Stage{CurrentState.CurrentStageIndex}_" +
+                            $"Condition{i}_Item{j}";
+                    if (!Streams.New(Game1.CurrentEvent, streamId, ret, out error)) {
                         Log.Warn(error);
                     }
                 }

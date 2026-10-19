@@ -37,9 +37,9 @@ internal class Sequence
             error = $"Invalid index {index}: expected 0-{Stages.Count-1}";
             return false;
         }
+        // it's valid to have null or empty script (but not when referenced!)
         if (source is null || source.Length == 0) {
-            error = $"Source argument was null or empty";
-            return false;
+            return true;
         }
         bool outOfScope = false;
         HashSet<string> nodes = new();

@@ -81,11 +81,13 @@ internal class Commands
         // trying to be clever
         evt.farmer.CanMove = true;
 
-        string[] script;
+        string[] script = null;
+        string[] awaitCommand = null;
         string err;
         string streamId;
 
         switch (CurrentState.State) {
+
         case SequenceState.AwaitingScript:
             string id = CurrentState.AwaitingScriptId;
             SequenceState NextState = SequenceState.WaitNext;
@@ -103,6 +105,7 @@ internal class Commands
             CurrentState.State = NextState;
             CurrentState.AwaitingScriptId = null;
             break;
+
         case SequenceState.WaitNext:
             int f = CurrentState.NextStageIndex;
             CurrentState.CurrentStageIndex = f;
@@ -113,16 +116,17 @@ internal class Commands
             CurrentState.State = SequenceState.Running;
             CurrentState.SetUpConditions();
             CurrentState.SetStageDialogue(evt);
-            if (CurrentState.Stage?.ScriptOnBegin is null ||
-                    CurrentState.Stage.ScriptOnBegin.Count == 0) {
-                break;
-            }
+
+            // remember: out script can be null here (no script specified)
             if (!CurrentState.Sequence.GetScript(CurrentState.CurrentStageIndex,
-                    CurrentState.Stage.ScriptOnBegin.ToArray(),
-                    out script, out err)) {
+                    CurrentState.Stage.ScriptOnBegin?.ToArray(), out script, out err)) {
                 Log.Warn(err);
                 break;
             }
+            if (script is null) {
+                break;
+            }
+
             streamId = $"ECC_{CurrentState.Id}_Stage{CurrentState.CurrentStageIndex}Begin";
             if (!Streams.New(evt, streamId, script, out err)) {
                 Log.Warn(err);
@@ -131,6 +135,7 @@ internal class Commands
             CurrentState.AwaitingScriptId = streamId;
             CurrentState.State = SequenceState.AwaitingScript;
             break;
+
         case SequenceState.Running:
         default:
             CurrentState.CheckTimePasses(Game1.currentGameTime);
@@ -138,17 +143,28 @@ internal class Commands
             if (!CurrentState.IsStageSatisfied()) {
                 break;
             }
-            CurrentState.State = SequenceState.WaitNext;
-            if (CurrentState.Stage?.ScriptOnAdvance is null ||
-                    CurrentState.Stage.ScriptOnAdvance.Count == 0) {
-                break;
+            // we need to know if there are any condition-met scripts still
+            // running. if so, we have to wait for them
+            List<string> openConditions = Streams.OpenStreams.Keys.Where(key => key.StartsWithIgnoreCase(
+                    $"ECC_{CurrentState.Id}_Stage{CurrentState.CurrentStageIndex}_Condition")).ToList();
+            if (openConditions.Count > 0) {
+                awaitCommand = new string[]{$"{Main.ModId}_StreamAwait " +
+                        string.Join(" ", openConditions)};
             }
+
+            // as with ScriptOnBegin, it's valid for out script to end up null
             if (!CurrentState.Sequence.GetScript(CurrentState.CurrentStageIndex,
-                    CurrentState.Stage.ScriptOnAdvance.ToArray(),
-                    out script, out err)) {
+                    CurrentState.Stage.ScriptOnAdvance?.ToArray(), out script, out err)) {
                 Log.Warn(err);
+            }
+            script = (awaitCommand ?? new string[]{})
+                    .Concat(script ?? new string[]{}).ToArray();
+
+            if (script.Length == 0) {
+                CurrentState.State = SequenceState.WaitNext;
                 break;
             }
+
             streamId = $"ECC_{CurrentState.Id}_Stage{CurrentState.CurrentStageIndex}Advance";
             if (!Streams.New(evt, streamId, script, out err)) {
                 Log.Warn(err);
