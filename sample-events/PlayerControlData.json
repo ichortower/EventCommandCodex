@@ -4,19 +4,15 @@
             {
                 "Id": "ichortower.ECC_SampleStage1",
                 "ScriptOnBegin": [
-                    "message \"oh, come on\"",
-                    "--speak Abigail \"It's a simple thing. Run around here and touch the five flowers. Ready... go!\"",
+                    "speak Abigail \"The first step is to touch the five flowers. Ready... go!\"",
                     "ichortower.ECC_TemporaryMapTiles Back2 30 28 Landscape 257 Back2 31 21 Landscape 257 Back2 22 22 Landscape 257 Back2 19 27 Landscape 257 Back2 23 32 Landscape 257",
                 ],
                 "Dialogues": {
-                    "Abigail": {
-                        "Dialogue": "Hey. You're doing great! Keep going until you touch all five, okay?$h"
-                    }
+                    "Abigail": "Hey. You're doing great! Keep going until you touch all five, okay?$h",
                 },
                 "AdvanceConditions": [
                     {
                         "Type": "TileTouch",
-                        "Required": true,
                         "Tiles": [
                             { "X": 30, "Y": 28, "Script": ["@Sparkle"] },
                             { "X": 31, "Y": 21, "Script": ["@Sparkle"] },
@@ -24,15 +20,73 @@
                             { "X": 19, "Y": 27, "Script": ["@Sparkle"] },
                             { "X": 23, "Y": 32, "Script": ["@Sparkle"] },
                         ],
-                    }
+                    },
                 ],
                 "Scripts": {
                     "Sparkle": [
+                        "temporaryAnimatedSprite \"LooseSprites\\Cursors\" 432 1436 16 16 80 6 2 ${x} ${y} false false 1 .02 1 0 0 0",
                         "ichortower.ECC_TemporaryMapTiles Back2 ${x} ${y} - -1",
-                        "playSound shwip",
+                        "playSound yoba",
                     ]
                 }
-            }
+            },
+            {
+                "Id": "ichortower.ECC_SampleStage2",
+                "ScriptOnBegin": [
+                    "speak Abigail \"Okay. Now, inspect the fountain. Anywhere will do.\"",
+                ],
+                "Dialogues": {
+                    "Abigail": "Did you forget? Inspect the fountain.$u",
+                },
+                "AdvanceConditions": [
+                    {
+                        "Type": "TileInteract",
+                        "SatisfiedCount": 1,
+                        "Tiles": [
+                            { "X": 25, "Y": 24, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 26, "Y": 24, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 27, "Y": 24, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 24, "Y": 25, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 24, "Y": 26, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 24, "Y": 27, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 25, "Y": 28, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 26, "Y": 28, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 27, "Y": 28, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 28, "Y": 25, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 28, "Y": 26, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                            { "X": 28, "Y": 27, "Script": ["@Ordinary"], "HintCursor": "Look" },
+                        ]
+                    },
+                ],
+                "Scripts": {
+                    "Ordinary": [
+                        "message \"An ordinary fountain.\"",
+                    ]
+                }
+            },
+            {
+                "Id": "ichortower.ECC_SampleStage3",
+                "ScriptOnBegin": [
+                    "speak Abigail \"Great! Now come talk to me over here.\"",
+                ],
+                "ScriptOnAdvance": [
+                    "ichortower.ECC_Speak Abigail \"All right! You pass. A plus. Good job.\"",
+                ],
+                "AdvanceConditions": [
+                    {
+                        "Type": "NpcInteract",
+                        "Actors": [
+                            {
+                                "Name": "Abigail",
+                                //"Script": [
+                                //    "speak Abigail \"All right! You pass. A plus. Good job.\"",
+                                //],
+                                "HintCursor": "Talk",
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
         "Scripts": {}
     }

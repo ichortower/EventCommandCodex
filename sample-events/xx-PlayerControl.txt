@@ -1,0 +1,20 @@
+Town
+continue
+26 30
+farmer 26 29 2 Abigail 27 29 3
+skippable
+pause 2000
+speak Abigail "Wait right here: that's the starting point."
+ichortower.ECC_ActorPathfind Abigail 33 28 3 wait
+speak Abigail "Okay! Here we go!"
+--
+-- NOTE: the data for this sequence is in PlayerControlData.json
+--
+ichortower.ECC_PlayerControl ichortower.ECC_SamplePlayerControlSequence
+ichortower.ECC_ActorSnapToGrid farmer Abigail
+speak Abigail "We're back in regular event flow now."
+advancedMove Abigail false 4 0 3 10
+pause 2200
+emote Abigail 32 true
+speak Abigail "See?$h"
+end
