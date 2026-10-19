@@ -132,11 +132,12 @@ internal static class CurrentState
         if (who is null || who.CurrentDialogue.Count == 0) {
             return false;
         }
-        // normally this is 6000 (milliseconds), but the face player timer
-        // can cause movements to block or fail, and it pauses during
-        // speech and maybe other times. i don't have a solution, so i've
-        // just shortened the timer to 1000
-        who.faceTowardFarmerForPeriod(1000, 3, faceAway: false, evt.farmer);
+        // don't use faceTowardFarmerForPeriod, since its timer (movementPause)
+        // blocks npc movement from event commands, which may arrive at any
+        // time. just set facing and revert when the dialogue closes.
+        int priorDirection = who.FacingDirection;
+        who.faceGeneralDirection(evt.farmer.getStandingPosition(), 0,
+                opposite:false, useTileCalculations:true);
         Game1.drawDialogue(who);
         Game1.afterDialogues += delegate {
             // i don't think this will ever be satisfied but just in case
@@ -146,6 +147,7 @@ internal static class CurrentState
             if (who.CurrentDialogue.Count == 0) {
                 SetStageDialogue(evt, who);
             }
+            who.faceDirection(priorDirection);
         };
         return true;
     }
