@@ -69,18 +69,15 @@
                 "ScriptOnBegin": [
                     "speak Abigail \"Great! Now come talk to me over here.\"",
                 ],
-                "ScriptOnAdvance": [
-                    "ichortower.ECC_Speak Abigail \"All right! You pass. A plus. Good job.\"",
-                ],
                 "AdvanceConditions": [
                     {
                         "Type": "NpcInteract",
                         "Actors": [
                             {
                                 "Name": "Abigail",
-                                //"Script": [
-                                //    "speak Abigail \"All right! You pass. A plus. Good job.\"",
-                                //],
+                                "Script": [
+                                    "ichortower.ECC_speak Abigail \"All right! You pass. A plus. Good job.\"",
+                                ],
                                 "HintCursor": "Talk",
                             },
                         ],

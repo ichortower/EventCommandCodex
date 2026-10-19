@@ -162,6 +162,20 @@ internal static class Extensions
         BucketFor(evt).PendingSignals.Clear();
     }
 
+    internal static Character GetAnyNamedActor(this SEvent evt, string name)
+    {
+        if (evt.IsFarmerActorId(name, out var farmerNumber)) {
+            return evt.GetFarmerActor(farmerNumber);
+        }
+        if (name.ContainsIgnoreCase("spouse") && !evt.farmer.hasRoommate()) {
+            return evt.getActorByName(evt.farmer.spouse);
+        }
+        if (name.ContainsIgnoreCase("roommate") && evt.farmer.hasRoommate()) {
+            return evt.getActorByName(evt.farmer.spouse);
+        }
+        return evt.getActorByName(name);
+    }
+
 
     /*
      * This is a classic swizzle, to cause streams to call the stream update

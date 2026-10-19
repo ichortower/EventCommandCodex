@@ -203,6 +203,90 @@ internal class Actor
 
 
     /*
+     * ichortower.ECC_ActorFaceToward <actor> (<actor>|<x> <y>) [delay|duration]
+     *
+     * Causes the named actor to face toward another named actor or set of
+     * coordinates. Useful if you don't know exactly where someone is standing.
+     *
+     * The coordinate parsing is identical to ActorPathfind and ViewportMove:
+     * i.e. you can use absolute or relative coordinates (although relative
+     * coordinates are unlikely to be useful).
+     */
+    public static void command_ActorFaceToward(SEvent evt, string[] args, EventContext context)
+    {
+        // this works a lot like StreamSafe's FaceDirection
+        if (evt.IsStatus(StreamStatus.AwaitingDelay)) {
+            if (evt.TickDownDelayTimer(Game1.currentGameTime)) {
+                evt.SetStatus(StreamStatus.Active);
+                ++evt.CurrentCommand;
+            }
+            return;
+        }
+        string err;
+        int optIndex = 3;
+        Vector2 target;
+        if (!ArgUtility.TryGet(args, 1, out string actorName, out err)) {
+            context.LogErrorAndSkip(err);
+            return;
+        }
+        Character who = evt.GetAnyNamedActor(actorName);
+        if (who is null) {
+            context.LogErrorAndSkip($"could not find actor '{actorName}'");
+            return;
+        }
+
+        if (args.Length > 3 &&
+                Coords.TryGetTarget(args[2], out int xDest, out CoordType xType, out err) &&
+                Coords.TryGetTarget(args[3], out int yDest, out CoordType yType, out err)) {
+            optIndex = 4;
+            xDest = xDest * 64 + (xType == CoordType.Absolute ? 32 : (int)who.getStandingPosition().X);
+            yDest = yDest * 64 + (yType == CoordType.Absolute ? 32 : (int)who.getStandingPosition().Y);
+            target = new(xDest, yDest);
+        }
+        else if (ArgUtility.TryGet(args, 2, out string targetName, out err)) {
+            Character c = evt.GetAnyNamedActor(targetName);
+            if (c is null) {
+                context.LogErrorAndSkip($"could not find actor '{targetName}'");
+                return;
+            }
+            target = c.getStandingPosition();
+        }
+        else {
+            context.LogErrorAndSkip(err);
+            return;
+        }
+
+        int delayTime = 0;
+        for (int i = optIndex; i < args.Length; ++i) {
+            if (int.TryParse(args[i], out delayTime)) {
+                break;
+            }
+            else if (args[i].EqualsIgnoreCase("delay")) {
+                delayTime = 500;
+                break;
+            }
+            else {
+                context.LogError($"unknown argument '{args[i]}'", willSkip: false);
+            }
+        }
+
+        if (who is Farmer f) {
+            f.FarmerSprite.StopAnimation();
+            f.completelyStopAnimatingOrDoingAction();
+        }
+        who.faceGeneralDirection(target, 0, opposite:false, useTileCalculations:false);
+
+        if (delayTime > 0) {
+            evt.SetDelayTimer(delayTime);
+            evt.SetStatus(StreamStatus.AwaitingDelay);
+        }
+        else {
+            ++evt.CurrentCommand;
+        }
+    }
+
+
+    /*
      * ichortower.ECC_ActorPathfind <actor> <x> <y> <facingDirection> [wait]
      *
      * Tells an event actor to move to a specific tile coordinate, but relies on the
