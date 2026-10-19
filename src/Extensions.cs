@@ -173,7 +173,6 @@ internal static class Extensions
             GameLocation location, GameTime time)
     {
         if (Streams.OpenStreams.Values.Contains(__instance)) {
-            Log.Debug("stream updating");
             __instance.UpdateStream(location, time);
             return false;
         }
