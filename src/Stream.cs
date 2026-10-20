@@ -177,6 +177,9 @@ internal class Stream
      * This command terminates all specified streams by setting their command indexes beyond
      * the ends of their scripts and setting them as having ended, so the stream runner will
      * no longer execute them.
+     *
+     * Also cleans up pending async actor movements, since those might otherwise stick
+     * around and cause problems despite not being updated.
      */
     public static void command_StreamHalt(SEvent evt, string[] args, EventContext context)
     {
@@ -191,6 +194,9 @@ internal class Stream
             }
             target.CurrentCommand = target.eventCommands.Length;
             target.SetStatus(StreamStatus.Ended);
+            // clear out moves and advancedMoves
+            target.npcControllers?.Clear();
+            ((Dictionary<string,Vector3>)Streams.EventAPAM.GetValue(target))?.Clear();
         }
         ++evt.CurrentCommand;
     }
