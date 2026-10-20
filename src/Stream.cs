@@ -178,8 +178,8 @@ internal class Stream
      * the ends of their scripts and setting them as having ended, so the stream runner will
      * no longer execute them.
      *
-     * Also cleans up pending async actor movements, since those might otherwise stick
-     * around and cause problems despite not being updated.
+     * Unfinished actor movements started by the halted streams will continue, and must be
+     * separately halted if needed.
      */
     public static void command_StreamHalt(SEvent evt, string[] args, EventContext context)
     {
@@ -194,9 +194,6 @@ internal class Stream
             }
             target.CurrentCommand = target.eventCommands.Length;
             target.SetStatus(StreamStatus.Ended);
-            // clear out moves and advancedMoves
-            target.npcControllers?.Clear();
-            ((Dictionary<string,Vector3>)Streams.EventAPAM.GetValue(target))?.Clear();
         }
         ++evt.CurrentCommand;
     }
@@ -326,24 +323,21 @@ internal class Streams
             return;
         }
         bool alive = false;
+        bool zombie = false;
         foreach (var kvp in OpenStreams) {
             SEvent e = kvp.Value;
-            if (e.IsStatus(StreamStatus.Ended)) {
-                continue;
-            }
             if (e.CurrentCommand >= e.eventCommands.Length) {
-                bool end = true;
-                // don't let a stream die if it has non-blocking moves still running
-                if (e.npcControllers?.Count > 0) {
-                    e.UpdateControllers(Game1.currentLocation, Game1.currentGameTime);
-                    end = false;
+                e.SetStatus(StreamStatus.Ended);
+            }
+            if (e.IsStatus(StreamStatus.Ended)) {
+                // even ended or exhausted streams still update their movements
+                // these two ifs are not ||'ed together because we don't want to
+                // short-circuit
+                if (!e.UpdateControllers(Game1.currentLocation, Game1.currentGameTime)) {
+                    zombie = true;
                 }
-                if (((Dictionary<string, Vector3>)Extensions.EventAPAM.GetValue(e)).Count > 0) {
-                    e.UpdateActorPositions(Game1.currentLocation, Game1.currentGameTime);
-                    end = false;
-                }
-                if (end) {
-                    e.SetStatus(StreamStatus.Ended);
+                if (!e.UpdateActorPositions(Game1.currentLocation, Game1.currentGameTime)) {
+                    zombie = true;
                 }
                 continue;
             }
@@ -359,7 +353,7 @@ internal class Streams
                 }
             } while(simul);
         }
-        if (!alive) {
+        if (!alive && !zombie) {
             StopStreamRunner();
         }
     }

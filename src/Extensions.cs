@@ -261,7 +261,7 @@ internal static class Extensions
         // removed updating evt.temporaryLocation. i don't think it's needed outside main stream
     }
 
-    internal static void UpdateControllers(this SEvent evt, GameLocation location, GameTime time)
+    internal static bool UpdateControllers(this SEvent evt, GameLocation location, GameTime time)
     {
         // use stream's farmerAddedSpeed instead of the global one on main
         int saved = Game1.CurrentEvent.farmerAddedSpeed;
@@ -273,6 +273,7 @@ internal static class Extensions
         });
 
         Game1.CurrentEvent.farmerAddedSpeed = saved;
+        return (evt.npcControllers?.Count ?? 0) == 0;
     }
 
     internal static void UpdateVanillaViewport(this SEvent evt, GameLocation location, GameTime time)
