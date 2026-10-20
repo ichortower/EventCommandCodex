@@ -24,6 +24,8 @@ This document explains how to use the event commands added by this mod.
 * [Simultaneous Commands](#simultaneous-commands)
   * [Merge](#merge)
   * [MergeEnd](#mergeend)
+* [Player Control Sequences](#player-control-sequences)
+  * [PlayerControl](#playercontrol)
 * [Actor Control](#actor-control)
   * [ActorPathfind](#actorpathfind)
   * [ActorAwaitMovement](#actorawaitmovement)
@@ -74,12 +76,12 @@ the `.txt` file to your game directory, rename it `test_event.txt`, and
 run `debug rte` in your SMAPI console to run it directly. There is no need
 to patch reload or anything else; it will be read live.
 
-When a command says that it "blocks" (verb) (or talks about another command
-"blocking"), that means that it will pause at that point in the command
-list and prevent the stream from continuing until some condition is met.
-For example, `move <npc> 3 0 2` blocks, because the optional `true`
-argument was not given, so the stream will wait until the move completes
-before running the next command.
+When a command says that it "blocks" (verb), or talks about another command
+"blocking", that means that it will pause at that point in the command list
+and prevent the stream from continuing until some condition is met. For
+example, `move <npc> 3 0 2` blocks, because the optional `true` argument was
+not given, so the stream will wait until the move completes before running the
+next command.
 
 **Note**: Unlike vanilla, Codex commands that have a behavior toggle argument
 (e.g. `ViewportMove`) are set up to expect a particular literal string instead
@@ -108,9 +110,17 @@ list, which continues from the command following the stream. Since a stream is
 independent of any other command list, you can use blocking and non-blocking
 commands as you desire within it, as if it were its own main event script.
 
-When a stream exhausts its command list, it becomes idle. You can restart it
-if desired, or overwrite it with new commands, or issue a command from any
-other stream that will wait for it to reach this state.
+When a stream exhausts its command list, it becomes idle and will stop
+updating, with one exception: a stream that would otherwise end but still has
+any non-blocking actor movements (`advancedMove`, `move ... true`,
+`ActorPathfind`) *will wait for those movements to complete* before stopping
+(so, don't put a looping `advancedMove` in a stream unless you have a plan!).
+
+Any other stream, or the main command list, can use the `StreamAwait` command
+to block until a stream (or multiple streams) reaches this idle state, so you
+can set up parallel commands and also guarantee that they have completed
+before your event continues. Idle streams can also be restarted or overwritten,
+if necessary.
 
 The power this gives you might not be obvious, so let's consider an example:
 
@@ -232,6 +242,9 @@ has its command index set to beyond the end of its command list, and has its
 state forcibly set to idle. As a result, it will immediately satisfy any other
 stream that is awaiting it, and its id becomes available again for reuse.
 
+**Note**: if a halted stream had any ongoing non-blocking actor movements, they
+will immediately be cancelled.
+
 A stream *can* halt itself, although I don't know what use case that has.
 
 
@@ -242,9 +255,9 @@ A stream *can* halt itself, although I don't know what use case that has.
 
 This command causes the current stream to pause indefinitely at this point,
 waiting until another stream restarts it with the `StreamResume` command. The
-purpose is to allow synchronization without having to create lots of streams;
-you can have a long-running stream that stops at specific points and will
-resume only when another stream "catches up".
+goal is to allow synchronization without having to create lots of streams; you
+can have a long-running stream that stops at specific points and will resume
+only when another stream "catches up".
 
 You can also use this command by its other name, `StreamSleep`.
 
@@ -414,6 +427,31 @@ This command takes no parameters, and declares the end of a simultaneous
 command block.
 
 Executing it is an error, just like `StreamEnd`.
+
+
+
+# Player Control Sequences
+
+This powerful feature lets you define a sequence of conditions and behaviors,
+then let the player take control of their farmer and navigate your event on
+their own (see Haley's beach event, where you must find her bracelet and bring
+it to her, for prior art).
+
+Because of its complexity, this feature has its documentation on
+[a dedicated page](player-control.md), so see that document for details, but
+the command is also listed here.
+
+
+### `PlayerControl`
+
+`ichortower.ECC_PlayerControl <id>`
+
+This command takes one argument: the id of a player control sequence to run.
+The id must match a key in the `ichortower.ECC/PlayerControl/Data` data asset,
+and the value for that key will govern how the sequence plays out.
+
+Please see [the dedicated PlayerControl documentation](player-control.md) for
+details.
 
 
 
@@ -1277,10 +1315,10 @@ accessing the event vars is the real purpose.
 
 # Vanilla Command Notes
 
-There are some vanilla commands which cause problems when used in streams
-outside of the main command list. Whenever possible, the Codex will
-automatically replace them with its own alternatives when they appear in a new
-stream's command list, so in most cases you should not need to know about these
+There are some vanilla commands which can cause problems when used in streams
+outside of the main command list. When necessary, the Codex will automatically
+replace them with its own alternatives when they appear in a new stream's
+command list, so in most cases you should not need to know about these
 behaviors and can keep using vanilla commands the way you are used to; but note
 that any errors you get in your log will reference the replacement command
 string.

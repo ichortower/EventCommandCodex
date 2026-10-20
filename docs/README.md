@@ -3,16 +3,15 @@
 This Stardew Valley mod is a framework (of sorts) which adds a bunch of new
 event commands to the game. These are designed to give you new capabilities
 when writing events, particularly involving event flow and timing. If you
-have ever found yourself frustrated or confused by the flow of event scripts,
-or just by a single command that's difficult to use (\*cough\* `viewport`),
-then this mod may be for you.
+have been confused by vanilla event commands, or frustrated by their
+limitations, or if you have simply *had it* with `viewport move`, then this
+mod may be for you.
 
 Here are some of the things you can do with these commands:
 
-* Stop some actors' movements, either immediately or at the next stop,
-    and without having to stop all of them
-* Tell an actor to go to a specific tile without having to write up the path
-    instructions yourself, or even know what tile they are standing on
+* Stop some actors' movements, either immediately or at their next stop, and
+    without having to stop all of them
+* Tell an actor to move to or face a specific tile and let them figure it out
 * Control the viewport with reasonable units and queueing
 * Control the scene's ambient light over time with fading and queueing
 * Set up parallel command lists that run without blocking the event loop
