@@ -11,6 +11,7 @@ internal class AdvanceCondition
     public List<ActorPoint> Actors = new();
     public int SatisfiedCount = -1;
     public int Duration = 0;
+    public List<string> Script = new();
 
     internal int GetSatisfiedCount()
     {

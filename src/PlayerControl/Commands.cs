@@ -127,7 +127,7 @@ internal class Commands
                 break;
             }
 
-            streamId = $"ECC_{CurrentState.Id}_Stage{CurrentState.CurrentStageIndex}Begin";
+            streamId = CurrentState.StreamPrefix + "_Begin";
             if (!Streams.New(evt, streamId, script, out err)) {
                 Log.Warn(err);
                 break;
@@ -143,13 +143,25 @@ internal class Commands
             if (!CurrentState.IsStageSatisfied()) {
                 break;
             }
-            // we need to know if there are any condition-met scripts still
-            // running. if so, we have to wait for them
-            List<string> openConditions = Streams.OpenStreams.Keys.Where(key => key.StartsWithIgnoreCase(
-                    $"ECC_{CurrentState.Id}_Stage{CurrentState.CurrentStageIndex}_Condition")).ToList();
+            // check for condition-satisfied script first; if it's running, it
+            // will already be awaiting its tile scripts.
+            // if there's no condition-level script, wait for any tile scripts.
+            List<string> openConditions = Streams.OpenStreams.Keys.Where(key =>
+                    key.StartsWithIgnoreCase(CurrentState.StreamPrefix) &&
+                    key.ContainsIgnoreCase("_Condition") &&
+                    key.EndsWithIgnoreCase("_Complete")).ToList();
             if (openConditions.Count > 0) {
                 awaitCommand = new string[]{$"{Main.ModId}_StreamAwait " +
                         string.Join(" ", openConditions)};
+            }
+            else {
+                List<string> openItems = Streams.OpenStreams.Keys.Where(key =>
+                        key.StartsWithIgnoreCase(CurrentState.StreamPrefix) &&
+                        key.ContainsIgnoreCase("_Item")).ToList();
+                if (openItems.Count > 0) {
+                    awaitCommand = new string[]{$"{Main.ModId}_StreamAwait " +
+                            string.Join(" ", openItems)};
+                }
             }
 
             // as with ScriptOnBegin, it's valid for out script to end up null
@@ -165,7 +177,7 @@ internal class Commands
                 break;
             }
 
-            streamId = $"ECC_{CurrentState.Id}_Stage{CurrentState.CurrentStageIndex}Advance";
+            streamId = CurrentState.StreamPrefix + "_Advance";
             if (!Streams.New(evt, streamId, script, out err)) {
                 Log.Warn(err);
                 break;

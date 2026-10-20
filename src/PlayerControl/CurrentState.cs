@@ -46,6 +46,9 @@ internal static class CurrentState
         }
     }
 
+    internal static string StreamPrefix => $"ECC_{Id}_Stage{CurrentStageIndex}";
+
+
     internal static void Clear()
     {
         Id = null;
@@ -158,6 +161,9 @@ internal static class CurrentState
             return;
         }
         SequenceStage stage = Stage;
+        string[] script;
+        string error;
+        string streamId;
         // these get lambdas are just to support getting the data from the
         // correct condition fields (between Tiles and Actors).
         var GetRequired = (int i, int j, ConditionType t) => {
@@ -181,8 +187,8 @@ internal static class CurrentState
         var GetScript = (int i, int j, ConditionType t) => {
             return t switch {
                 ConditionType.TileTouch or
-                ConditionType.TileInteract => stage.AdvanceConditions[i].Tiles[j].Script.ToArray(),
-                ConditionType.NpcInteract => stage.AdvanceConditions[i].Actors[j].Script.ToArray(),
+                ConditionType.TileInteract => stage.AdvanceConditions[i].Tiles[j].Script?.ToArray(),
+                ConditionType.NpcInteract => stage.AdvanceConditions[i].Actors[j].Script?.ToArray(),
                 _ => null,
             };
         };
@@ -219,34 +225,59 @@ internal static class CurrentState
                     continue;
                 }
                 ConditionStates[i].ItemsSatisfied[j] = true;
-                string[] script = GetScript(i, j, type);
-                if (!Sequence.GetScript(CurrentStageIndex, script,
-                        out string[] ret, out string error)) {
-                    Log.Warn(error);
-                }
-                else if (ret?.Length > 0 is true) {
-                    // npc name can be null, which is fine
-                    string npcName = GetNpcName(i, j, type);
-                    ret = ret.Select(s => ReplaceTokens(s, source, npcName)).ToArray();
-                    string streamId = $"ECC_{CurrentState.Id}_" +
-                            $"Stage{CurrentState.CurrentStageIndex}_" +
-                            $"Condition{i}_Item{j}";
-                    if (!Streams.New(Game1.CurrentEvent, streamId, ret, out error)) {
-                        Log.Warn(error);
-                    }
-                }
                 ++completeCount;
                 if (currentRequired) {
                     ++requiredComplete;
                 }
+
+                string[] initial = GetScript(i, j, type);
+                if (!Sequence.GetScript(CurrentStageIndex, initial, out script, out error)) {
+                    Log.Warn(error);
+                    continue;
+                }
+                if (script is null) {
+                    continue;
+                }
+                // npc name can be null, which is fine
+                string npcName = GetNpcName(i, j, type);
+                script = script.Select(s => ReplaceTokens(s, source, npcName)).ToArray();
+                streamId = StreamPrefix + $"_Condition{i}_Item{j}";
+                if (!Streams.New(Game1.CurrentEvent, streamId, script, out error)) {
+                    Log.Warn(error);
+                }
             }
             if (requiredComplete < requiredCount) {
-                return;
+                continue;
             }
             int softTarget = stage.AdvanceConditions[i].GetSatisfiedCount();
-            if (completeCount - requiredCount >= softTarget) {
-                Log.Debug($"Completing condition {i} ({type})");
-                ConditionStates[i].Satisfied = true;
+            if (completeCount - requiredCount < softTarget) {
+                continue;
+            }
+
+            Log.Debug($"Completing condition {i} ({type})");
+            ConditionStates[i].Satisfied = true;
+            if (!Sequence.GetScript(CurrentStageIndex,
+                    Stage.AdvanceConditions[i].Script?.ToArray(), out script, out error)) {
+                Log.Warn(error);
+                continue;
+            }
+            if (script is null) {
+                continue;
+            }
+
+            string[] awaitCommand = new string[]{};
+            // await any ongoing item scripts if needed
+            List<string> openItems = Streams.OpenStreams.Keys.Where(key =>
+                    key.StartsWithIgnoreCase(CurrentState.StreamPrefix) &&
+                    key.ContainsIgnoreCase("_Item")).ToList();
+            if (openItems.Count > 0) {
+                awaitCommand = new string[]{$"{Main.ModId}_StreamAwait " +
+                        string.Join(" ", openItems)};
+            }
+            script = awaitCommand.Concat(script).ToArray();
+            streamId = CurrentState.StreamPrefix + $"_Condition{i}_Complete";
+            if (!Streams.New(Game1.CurrentEvent, streamId, script, out error)) {
+                Log.Warn(error);
             }
         }
     }
