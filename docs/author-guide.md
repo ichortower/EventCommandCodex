@@ -32,6 +32,7 @@ This document explains how to use the event commands added by this mod.
   * [ActorAwaitAnimation](#actorawaitanimation)
   * [ActorHalt](#actorhalt)
   * [ActorSnapToGrid](#actorsnaptogrid)
+  * [ActorFaceToward](#actorfacetoward)
 * [Viewport Control](#viewport-control)
   * [ViewportMove](#viewportmove)
   * [ViewportShake](#viewportshake)
@@ -557,6 +558,32 @@ This command shifts the position of all named actors, snapping them back to an
 even tile position. This is useful if, for example, you are trying to use the
 `move` command and your actors are void walking, or if you have finished a
 player control segment and the farmer player might be standing any old where.
+
+
+### `ActorFaceToward`
+
+`ichortower.ECC_ActorFaceToward <actor> <actor|x y> [delay|duration]`
+
+This command works just like [the stream-safe `FaceDirection`](#facedirection),
+except that the target direction command should either be another actor (or
+`farmer`, `spouse`, or `roommate`) or a pair of tile coordinates, and the actor
+will figure out which direction to face automatically. This is useful if you
+don't know where a particular character might be standing.
+
+For example, `ichortower.ECC_ActorFaceToward Abigail Haley` will cause Abigail
+to face toward Haley, no matter where the two of them are in relation to each
+other. Likewise, `ichortower.ECC_ActorFaceToward Demetrius 24 28` will make
+Demetrius face toward the tile (24,28), no matter where he is.
+
+Just like `ViewportMove`, the coordinates can be absolute (plain integers, or
+prefixed with `a`) or relative (plain `0`, or prefixed with `+`/`-`), although
+relative coordinates aren't likely to be helpful, since you could just use
+regular `faceDirection` instead.
+
+The optional final argument should be the word `delay` or any integer, just
+like with the stream-safe `FaceDirection`, to specify how long to pause after
+facing.
+
 
 
 # Viewport Control
