@@ -394,8 +394,8 @@ If you're like me, you may have been excited to discover vanilla's
 `beginSimultaneousCommand`/`endSimultaneousCommand` pairing, and pictured how
 they might work, only to discover that they fulfill their promise only for a
 narrow subset of event commands. Streams (see above) are my answer to that
-problem in general, but I have also introduced these commands to provide a
-way to accomplish what these commands sound like they should do.
+problem in general, but I have also introduced replacement commands to provide
+a way to accomplish what these commands sound like they should do.
 
 
 ### `Merge`
@@ -450,7 +450,7 @@ it to her, for prior art).
 
 Because of its complexity, this feature has its documentation on
 [a dedicated page](player-control.md), so see that document for details, but
-the command is also listed here.
+the main command is also listed here.
 
 
 ### `PlayerControl`
