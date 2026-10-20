@@ -326,7 +326,19 @@ internal class Streams
                 continue;
             }
             if (e.CurrentCommand >= e.eventCommands.Length) {
-                e.SetStatus(StreamStatus.Ended);
+                bool end = true;
+                // don't let a stream die if it has non-blocking moves still running
+                if (e.npcControllers?.Count > 0) {
+                    e.UpdateControllers(Game1.currentLocation, Game1.currentGameTime);
+                    end = false;
+                }
+                if (((Dictionary<string, Vector3>)Extensions.EventAPAM.GetValue(e)).Count > 0) {
+                    e.UpdateActorPositions(Game1.currentLocation, Game1.currentGameTime);
+                    end = false;
+                }
+                if (end) {
+                    e.SetStatus(StreamStatus.Ended);
+                }
                 continue;
             }
             alive = true;
