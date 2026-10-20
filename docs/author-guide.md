@@ -112,10 +112,11 @@ independent of any other command list, you can use blocking and non-blocking
 commands as you desire within it, as if it were its own main event script.
 
 When a stream exhausts its command list, it becomes idle and will stop
-updating, with one exception: a stream that would otherwise end but still has
-any non-blocking actor movements (`advancedMove`, `move ... true`,
-`ActorPathfind`) *will wait for those movements to complete* before stopping
-(so, don't put a looping `advancedMove` in a stream unless you have a plan!).
+updating, with one exception: any unfinished actor movements started by that
+stream (`move`, `advancedMove`, `ActorPathfind`) will continue to be processed
+and updated even though the stream is idle. This means a stream may report
+itself as done despite some of its work continuing in the background, so be
+aware of it.
 
 Any other stream, or the main command list, can use the `StreamAwait` command
 to block until a stream (or multiple streams) reaches this idle state, so you
@@ -227,8 +228,9 @@ been halted by the `StreamHalt` command).
 
 Use this to guarantee that a particular stream (or streams) has finished before
 proceeding. For example, if a stream is making an actor move to a particular
-spot, you can await it in order to be sure that actor has arrived. Either they
-will already be there, or you'll pause until they are.
+spot and then play an animation, you can await it in order to be sure that
+those commands have executed. Either they will already be done, or you'll pause
+until they are.
 
 A stream cannot await itself (this will cause an error); but there is not yet
 any protection against circular awaiting, so be careful not to do that.
@@ -243,8 +245,9 @@ has its command index set to beyond the end of its command list, and has its
 state forcibly set to idle. As a result, it will immediately satisfy any other
 stream that is awaiting it, and its id becomes available again for reuse.
 
-**Note**: if a halted stream had any ongoing non-blocking actor movements, they
-will immediately be cancelled.
+**Reminder**: a halted stream retains its unfinished actor movements, which
+will continue to process as normal. You should also use `ActorHalt` if you need
+to tell actors to stop immediately.
 
 A stream *can* halt itself, although I don't know what use case that has.
 
@@ -410,6 +413,13 @@ As normal for parallel execution (see Streams, above), you should be aware of
 behavior that might collide, and you must avoid commands that break streams
 and do not have stream-safe replacements (e.g. `quickQuestion`).
 
+Because of how streams behave with actor movements, `advancedMove` in
+particular is not usable on its own inside a Merge block: its stream will
+immediately go idle and count as finished (but the movement will play out
+normally). To use it, also include an `ActorAwaitMovement` command (after it
+in the list! Commands are processed in order) to correctly block until they
+arrive.
+
 **Note**: This command scans ahead for the matching `MergeEnd` and does not
 have special handling for other types of block command (`Repeat`, `Stream`,
 `Merge`, etc.), so do not attempt to define any type of block inside of a
@@ -565,7 +575,7 @@ player control segment and the farmer player might be standing any old where.
 `ichortower.ECC_ActorFaceToward <actor> <actor|x y> [delay|duration]`
 
 This command works just like [the stream-safe `FaceDirection`](#facedirection),
-except that the target direction command should either be another actor (or
+except that the target direction argument should either be another actor (or
 `farmer`, `spouse`, or `roommate`) or a pair of tile coordinates, and the actor
 will figure out which direction to face automatically. This is useful if you
 don't know where a particular character might be standing.
@@ -1332,8 +1342,7 @@ an event, you won't be able to access any variables.
 This is a token resolver, for use in
 [tokenizable strings](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
 This lets you evaluate your event variables inside parsed text: at the moment,
-the only use I am aware of is in the `speak` command (but remember to use that
-only on the main command list).
+the only use I am aware of is in the `speak` command.
 
 I suppose you could use it to do basic math in dialogue elsewhere, but
 accessing the event vars is the real purpose.
