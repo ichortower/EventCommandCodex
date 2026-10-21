@@ -12,6 +12,7 @@ particular its data model, which governs how the sequences will play out.
   * [PlayerControlEnd](#playercontrolend)
 * [Data Model](#data-model)
   * [Stages](#stages)
+  * [AdvanceConditions](#advanceconditions)
   * [Scripts](#scripts)
 
 
@@ -77,6 +78,99 @@ This command immediately ends the current player control sequence. Similar to
 
 # Data Model
 
+To define your sequences, your mod will need to edit the following data asset
+using Content Patcher:
+
+`ichortower.ECC/PlayerControl/Data`
+
+The asset is a `string->object` dictionary. The string keys are IDs, and should
+be [unique string IDs](https://stardewvalleywiki.com/Modding:Common_data_field_types#Unique_string_ID),
+like most 1.6-era data items. The model (object) has the following fields:
+
+<table>
+
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+
+<tr>
+<td><code>Stages</code></td>
+<td>array(object)</td>
+<td>
+
+This array contains the definition of each *Stage* in your player control
+sequence. By default, these stages will be executed in the order you list them,
+but you can jump around with the `PlayerControlSetNextStage` command.
+
+The format for the stage object is laid out under [Stages](#stages), below.
+
+</td>
+</tr>
+
+<tr>
+<td><code>Scripts</code></td>
+<td>string->array(string) dict</td>
+<td>
+
+This dictionary defines [Scripts](#scripts) which are common to the entire
+sequence and can be referenced by any script anywhere deeper in the sequence
+data (but not by other sequences). See the Scripts section for details about
+how referencing works.
+
+The keys of this object are script names: they must be unique within the
+object, but there is no need to make them globally unique. The values are
+arrays of strings.
+
+These scripts will never be run unless referenced by another script field.
+
+</td>
+</tr>
+
+
 ## Stages
 
+## AdvanceConditions
+
 ## Scripts
+
+Script values can be found in these places in the player control data model:
+
+1. In the sequence-level `Scripts` object, as values (the keys are script names).
+2. At the stage-level `Scripts` object, identical to #1.
+3. At the stage level, as `ScriptOnBegin` and `ScriptOnAdvance`.
+4. At the condition level, as `ScriptOnSatisfy`.
+5. At the condition level, as the per-tile `Script`.
+
+No matter where they are found, their format is the same: an array of strings.
+The strings can be regular event commands, or, if the first string starts with
+the `@` character, the script is considered a *reference* and the sequence
+handler will look through the sequence data for a script bearing that name
+(see Following References, below).
+through the stage-level and sequence-level `Scripts`
+dictionaries to find a script whose name matches the rest of the string, and
+use that script instead (any subsequent strings in the array are discarded).
+This script may itself be a reference, and the chain may be as long as
+desired, but loops will cause an error, and references at the sequence level
+will not find scripts at the stage level.
+
+### Following References
+
+When loading a script, if the first string in the array starts with `@`, the
+rest of that string is treated as the name of a script to find (any subsequent
+strings in the array are discarded). So, for instance, this script value:
+
+`"Script": ["@SparkleTile"],`
+
+... means "find the script called `SparkleTile` and use its contents here".
+
+To find a script, the sequence handler checks first in the `Scripts` object
+provided for the current stage, and then in the sequence-level `Scripts` object.
+A found script may itself be a reference, in which case the search begins
+again, except for two things:
+
+1. The handler will detect loops and throw an error, and
+2. Once the search has reached the sequence-level `Scripts`, it cannot return
+   to the stage-level `Scripts`. Put another way, the search can get broader
+   but can't get narrower.
