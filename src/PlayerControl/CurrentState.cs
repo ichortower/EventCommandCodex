@@ -257,7 +257,7 @@ internal static class CurrentState
             Log.Debug($"Completing condition {i} ({type})");
             ConditionStates[i].Satisfied = true;
             if (!Sequence.GetScript(CurrentStageIndex,
-                    Stage.AdvanceConditions[i].Script?.ToArray(), out script, out error)) {
+                    Stage.AdvanceConditions[i].ScriptOnSatisfy?.ToArray(), out script, out error)) {
                 Log.Warn(error);
                 continue;
             }
