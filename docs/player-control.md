@@ -106,7 +106,7 @@ but you can jump around with the `PlayerControlSetNextStage` command.
 
 The format for the stage object is laid out under [Stages](#stages), below.
 
-*Default*: []
+*Default*: `[]`
 
 </td>
 </tr>
@@ -127,7 +127,7 @@ arrays of strings.
 
 These scripts will never be run unless referenced by another script field.
 
-*Default*: {}
+*Default*: `{}`
 
 </td>
 </tr>
@@ -170,8 +170,6 @@ This field is **required**, and must be unique among stages in this sequence
 for the `PlayerControlSetNextStage` command, as well as identify this stage
 internally to the mod.
 
-*Default*: null
-
 </td>
 </tr>
 
@@ -184,7 +182,7 @@ This [script](#scripts) will be run when this stage begins. Although the player
 will have control while it executes, no conditions for this stage will be
 checked until it has finished.
 
-*Default*: []
+*Default*: `[]`
 
 </td>
 </tr>
@@ -197,7 +195,7 @@ checked until it has finished.
 This [script](#scripts) will be run when this stage completes, *before*
 allowing flow to proceed to the next stage.
 
-*Default*: []
+*Default*: `[]`
 
 </td>
 </tr>
@@ -212,7 +210,7 @@ Just like the `Scripts` object at the sequence level, this one contains
 this stage. The scripts will not be run unless referenced; see the Scripts
 section for more on referencing.
 
-*Default*: {}
+*Default*: `{}`
 
 </td>
 </tr>
@@ -233,7 +231,7 @@ text should not be missable). However, you can safely break up the dialogue
 with `#$e#`, and the dialogue will not be replenished until it's all exhausted;
 this lets you (for example) cycle multiple dialogue options.
 
-*Default*: {}
+*Default*: `{}`
 
 </td>
 </tr>
@@ -248,8 +246,6 @@ which the stage is satisfied and flow can proceed to the next stage.
 
 The format for the advance condition object is laid out under
 [Advance Conditions](#advance-conditions), below.
-
-*Default*: []
 
 </td>
 </tr>
@@ -269,9 +265,9 @@ condition and three non-required ones, along with a SatisfiedCount of `1`; in
 this case, the player must meet the required condition and any one of the
 remaining three optional ones.
 
-See the AdvanceConditions section for more details.
+See the Advance Conditions section for more details.
 
-*Default*: -1
+*Default*: `-1`
 
 </td>
 </tr>
@@ -279,7 +275,7 @@ See the AdvanceConditions section for more details.
 </table>
 
 
-## AdvanceConditions
+## Advance Conditions
 
 Advance Conditions are the heart of the player control sequence: these define
 what it is the player is expected to do with their control. Each stage has a
@@ -309,8 +305,6 @@ and determines the behavior of the condition.
 - `NpcInteract`: the player must interact with specific NPCs.
 - `TimePass`: an amount of time must pass.
 
-*Default*: "None"
-
 </td>
 </tr>
 
@@ -326,7 +320,7 @@ optional if the stage is using a `SatisfiedCount`).
 Remember that any conditions listed as Required are exempt from the stage's
 SatisfiedCount field and must be met to proceed.
 
-*Default*: false
+*Default*: `false`
 
 </td>
 </tr>
@@ -342,7 +336,7 @@ with. The objects' data format is given below, under [Tiles](#tiles).
 
 This field is ignored when the condition type is `NpcInteract` or `TimePass`.
 
-*Default*: []
+*Default*: `[]`
 
 </td>
 </tr>
@@ -358,7 +352,7 @@ data format is given below, under [Actors](#actors).
 
 This field is ignored by any other condition type.
 
-*Default*: []
+*Default*: `[]`
 
 </td>
 </tr>
@@ -374,7 +368,7 @@ example, `30000` would satisfy the condition after 30 seconds.
 
 This field is ignored by any other condition type.
 
-*Default*: -1
+*Default*: `-1`
 
 </td>
 </tr>
@@ -393,7 +387,7 @@ five tiles in order to proceed.
 
 This field is ignored when the condition type is `TimePass`.
 
-*Default*: -1
+*Default*: `-1`
 
 </td>
 </tr>
@@ -412,7 +406,7 @@ from running until it is completed).
 This is the generally-recommended place to put `PlayerControlSetNextStage`
 commands, if you wish to use them.
 
-*Default*: []
+*Default*: `[]`
 
 </td>
 </tr>
@@ -431,22 +425,139 @@ different stages) based on whether the player was fast enough.
 
 ### Tiles
 
-  <table>
-  <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
-  <tr><td><code>X</code></td><td>integer</td>
-  <td>(**required**) The X coordinate of the target tile.</td></tr>
-  <tr><td><code>Y</code></td><td>integer</td>
-  <td>(**required**) The Y coordinate of the target tile.</td></tr>
-  <tr><td><code>Required</code></td><td>boolean</td>
-  <td>Just like the condition's `Required` field, this declares whether this tile
-  is definitely required or merely soft-required to satisfy the condition.</td></tr>
-  <tr><td><code>HintCursor</code></td><td>enum</td>
-  <td>One of the following strings:</td>
-  <tr><td><code>Script</code></td><td>array(string)</td>
-  <td>A [Script](#scripts) to run when the player touches or interacts with the tile.</td>
-  </table>
+The `TileTouch` and `TileInteract` condition types both use this data model
+for their arrays of tiles. The objects look like this:
+
+<table>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+
+<tr><td><code>X</code></td>
+<td>integer</td>
+<td>
+
+(**required**) The X coordinate of the target tile.
+
+</td></tr>
+
+<tr><td><code>Y</code></td>
+<td>integer</td>
+<td>
+
+(**required**) The Y coordinate of the target tile.
+
+</td></tr>
+
+<tr><td><code>Required</code></td>
+<td>boolean</td>
+<td>
+
+Just like the condition's `Required` field, this declares whether this tile
+is definitely required or merely soft-required to satisfy the condition.
+
+*Default*: `false`
+
+</td></tr>
+
+<tr><td><code>HintCursor</code></td>
+<td>enum</td>
+<td>
+
+This string tells the sequence handler which mouse cursor to display when the
+player hovers the mouse over the tile. It must be one of the following strings
+and indicates the appropriate cursor (descriptions below are vanilla's icons):
+
+- `None`: do nothing (allow vanilla to handle it).
+- `Default`: the default arrow cursor.
+- `Wait`: the "no input allowed, please wait" cursor (hourglass).
+- `Grab`: the open-hand cursor.
+- `Gift`: the cursor with the gift parcel icon on it.
+- `Talk`: the cursor with the speech bubble.
+- `Look`: the inspect cursor (magnifying glass).
+- `Harvest`: the cursor with the green `+`.
+- `Heart`: (unused in vanilla?) a cursor with a heart on it.
+- `GamepadPointer`: hand cursor with pointing index finger (used in gamepad mode).
+
+The names are derived from the "official" cursor names found in the game's
+decompiled source code. They correspond, in the order listed above, to the
+icons found at the top-left of the `LooseSprites/Cursors` tilesheet (with the
+exception of `GamepadPointer`, which is on the second row).
+
+*Default*: `None`
+
+</td></tr>
+
+<tr><td><code>Script</code></td>
+<td>array(string)</td>
+<td>
+
+A [Script](#scripts) to run when the player touches or interacts with the tile.
+
+In the event that interacting with this tile satisfies the condition, this
+script is guaranteed to finish executing before the condition's
+`ScriptOnSatisfy` is allowed to run.
+
+*Default*: `[]`
+
+</td>
+</tr>
+</table>
+
 
 ### Actors
+
+The `NpcInteract` condition type uses this data model for its array of actors.
+The objects look like this:
+
+<table>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+
+<tr><td><code>Name</code></td>
+<td>string</td>
+<td>
+
+(**required**) The internal name of the NPC to interact with.
+
+</td></tr>
+
+<tr><td><code>Required</code></td>
+<td>boolean</td>
+<td>
+
+This works just like the `Required` field on [Tiles](#tiles) and
+[Advance Conditions](#advance-conditions). If true, this NPC is definitely
+required to satisfy the condition; if false, they may or may not be, depending
+on the condition's `SatisfiedCount`.
+
+*Default*: `false`
+
+</td></tr>
+
+<tr><td><code>HintCursor</code></td>
+<td>enum</td>
+<td>
+
+This is identical to the `HintCursor` field on [Tiles](#tiles), above: it sets
+the mouse cursor to display when mousing over the NPC in question.
+
+*Default*: `None`
+
+</td></tr>
+
+<tr><td><code>Script</code></td>
+<td>array(string)</td>
+<td>
+
+This is identical to the `Script` field on [Tiles](#tiles), above: this script
+will be executed when the player interacts with this NPC.
+
+As with Tiles, this script is guaranteed to finish executing before the
+condition's `ScriptOnSatisfy` is allowed to run.
+
+*Default*: `[]`
+
+</td></tr>
+
+</table>
 
 
 ## Scripts
@@ -523,7 +634,13 @@ these are case-insensitive.
   name of the NPC.
 
 These are useful for performing actions that depend on coordinates or NPC
-names.
+names while also reusing the same script in multiple places (for example, if
+you want to run the same script to e.g. change a map tile or display a temporary
+sprite at each tile in a condition, you can put the script at the stage level
+with these tokens in it and reference it `@ByName`, and the coordinates will
+automatically be filled in for you. See
+[the example PlayerControl event](../sample-events/PlayerControlData.json) for
+a demonstration of this).
 
 The substitution of these tokens takes place *before* the strings are handed
 off to the game.
