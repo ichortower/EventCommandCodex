@@ -9,8 +9,8 @@ internal class AdvanceCondition
     public bool Required = false;
     public List<TilePoint> Tiles = new();
     public List<ActorPoint> Actors = new();
-    public int SatisfiedCount = -1;
     public int Duration = 0;
+    public int SatisfiedCount = -1;
     public List<string> ScriptOnSatisfy = new();
 
     internal int GetSatisfiedCount()

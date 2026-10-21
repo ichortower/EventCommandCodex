@@ -240,7 +240,8 @@ internal static class CurrentState
                 }
                 // npc name can be null, which is fine
                 string npcName = GetNpcName(i, j, type);
-                script = script.Select(s => ReplaceTokens(s, source, npcName)).ToArray();
+                int count = ConditionStates[i].ItemsSatisfied.Count(i => i is true);
+                script = script.Select(s => ReplaceTokens(s, source, npcName, count)).ToArray();
                 streamId = StreamPrefix + $"_Condition{i}_Item{j}";
                 if (!Streams.New(Game1.CurrentEvent, streamId, script, out error)) {
                     Log.Warn(error);
@@ -282,12 +283,13 @@ internal static class CurrentState
         }
     }
 
-    internal static string ReplaceTokens(string cmd, Point source, string npcName)
+    internal static string ReplaceTokens(string cmd, Point source, string npcName, int count)
     {
         // lol don't confuse my token syntax with interpolated strings
         string ret = cmd
                 .Replace("${x}", $"{source.X}", StringComparison.OrdinalIgnoreCase)
-                .Replace("${y}", $"{source.Y}", StringComparison.OrdinalIgnoreCase);
+                .Replace("${y}", $"{source.Y}", StringComparison.OrdinalIgnoreCase)
+                .Replace("${count}", $"{count}", StringComparison.OrdinalIgnoreCase);
         if (npcName is not null) {
             ret = ret.Replace("${npc}", npcName, StringComparison.OrdinalIgnoreCase);
         }
