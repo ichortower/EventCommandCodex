@@ -106,12 +106,14 @@ but you can jump around with the `PlayerControlSetNextStage` command.
 
 The format for the stage object is laid out under [Stages](#stages), below.
 
+*Default*: []
+
 </td>
 </tr>
 
 <tr>
 <td><code>Scripts</code></td>
-<td>string->array(string) dict</td>
+<td>string&rarr;array(string) dict</td>
 <td>
 
 This dictionary defines [Scripts](#scripts) which are common to the entire
@@ -125,11 +127,118 @@ arrays of strings.
 
 These scripts will never be run unless referenced by another script field.
 
+*Default*: {}
+
 </td>
 </tr>
 
+</table>
+
 
 ## Stages
+
+Each stage object represents one discrete phase of your sequence. Haley's beach
+bracelet scene, for example, can be considered to have two stages:
+
+1. the player must find the bracelet and interact with its tile
+2. the player must talk to Haley
+
+Generally, you use stages to define the order that things should occur: the
+first stage must be completed before the second one can begin, and so on down
+the line.
+
+Each stage has *advance conditions*, which define what the player has to do to
+proceed, and several types of *scripts*, which define what occurs and when
+within the stage.
+
+Here's the data model.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+
+<tr>
+<td><code>Id</code></td>
+<td>string</td>
+<td>
+
+This field is **required**, and must be unique among stages in this sequence
+(but it does not have to be globally unique). Its job is to serve as a target
+for the `PlayerControlSetNextStage` command, as well as identify this stage
+internally to the mod.
+
+*Default*: null
+
+</td>
+</tr>
+
+<tr>
+<td><code>ScriptOnBegin</code></td>
+<td>array(string)</td>
+<td>
+
+This script will be run when this stage begins. Although the player will have
+control while it executes, no conditions for this stage will be checked until
+it has finished.
+
+*Default*: null
+
+</td>
+</tr>
+
+<tr>
+<td><code>ScriptOnAdvance</code></td>
+<td>array(string)</td>
+<td>
+
+This script will be run when this stage completes, *before* allowing flow to
+proceed to the next stage.
+
+*Default*: null
+
+</td>
+</tr>
+
+<tr>
+<td><code>Scripts</code></td>
+<td>string&rarr;array(string) dict</td>
+<td>
+
+Just like the `Scripts` object at the sequence level, this one contains scripts
+which can be referenced from any other script field within this stage. The
+scripts will not be run unless referenced; see the Scripts section for more
+on referencing.
+
+*Default*: {}
+
+</td>
+</tr>
+
+<tr>
+<td><code>Dialogues</code></td>
+<td>string&rarr;string dict</td>
+<td>
+
+This dictionary sets dialogue strings which will be assigned to actors during
+this stage. The keys are actor internal names, and the values are either
+translation keys to load from (i.e. `Asset\\Name:key`) or literal dialogue
+strings.
+
+These dialogues will be repeated endlessly as long as the player continues to
+interact with the NPC (the idea being that they may be giving hints, and the
+text should not be missable). However, you can safely break up the dialogue
+with `#$e#`, and the dialogue will not be replenished until it's all exhausted;
+this lets you (for example) cycle multiple dialogue options.
+
+*Default*: {}
+
+</td>
+</tr>
+
+</table>
 
 ## AdvanceConditions
 
@@ -148,12 +257,13 @@ The strings can be regular event commands, or, if the first string starts with
 the `@` character, the script is considered a *reference* and the sequence
 handler will look through the sequence data for a script bearing that name
 (see Following References, below).
-through the stage-level and sequence-level `Scripts`
-dictionaries to find a script whose name matches the rest of the string, and
-use that script instead (any subsequent strings in the array are discarded).
-This script may itself be a reference, and the chain may be as long as
-desired, but loops will cause an error, and references at the sequence level
-will not find scripts at the stage level.
+
+Scripts are run during a player control sequence using
+[Streams](author-guide.md#stream-control), which in general means that the
+player will still be able to move around while they are running (notable
+exception: the dialogue box opened by the `speak` command will block player
+movement). However, there are some ordering guarantees in place for certain
+script interactions.
 
 ### Following References
 
