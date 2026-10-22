@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <Version>0.13.0-beta</Version>
+        <Version>0.13.1-beta</Version>
         <TargetFramework>net6.0</TargetFramework>
         <EnableHarmony>true</EnableHarmony>
 
