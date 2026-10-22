@@ -1,0 +1,23 @@
+Town
+continue
+29 67
+farmer -1000 -1000 0 Emily 29 66 2 Haley 29 69 0
+pause 1600
+speak Haley "Here we have my sister Emily."
+advancedMove Emily true 0 -2 4 1100 2 0 1 1100 0 2 2 1100 -2 0 3 1100
+pause 1000
+speak Haley "As you can see, she is walking in circles."
+speak Haley "Depending on how long you take to clear all these dialogue boxes, she'll end up in a different place."
+pause 800
+speak Haley "(Is that enough talking? Should I stop now?)$u"
+emote Haley 40
+speak Haley "One more. This should do it!$h"
+-- The Halt command with waitnext makes sure Emily ends up on an even tile
+ichortower.ECC_ActorHalt waitnext Emily
+ichortower.ECC_ActorPathfind Emily 22 67 2
+speak Haley "Okay! Now she's walking over to the lamppost. She'll always reach the right spot."
+ichortower.ECC_ActorAwaitMovement Emily
+emote Haley 32 true
+pause 200
+emote Emily 32
+end

@@ -9,22 +9,24 @@ mod may be for you.
 
 Here are some of the things you can do with these commands:
 
-* Stop some actors' movements, either immediately or at their next stop, and
-    without having to stop all of them
-* Tell an actor to move to or face a specific tile and let them figure it out
-* Control the viewport with reasonable units and queueing
-* Control the scene's ambient light over time with fading and queueing
-* Set up parallel command lists that run without blocking the event loop
-* Loop, stop, restart, and/or wait for parallel lists to finish executing
-* Execute blocks of commands conditionally with If/ElseIf/Else/EndIf
+* Set up parallel command lists that run without blocking the event loop,
+  and suspend, resume, loop, halt, restart, and/or wait for them to complete
 * Define and run your own custom, complex player control sequences
-* Show large images ("CGs") that can fill the whole screen, for dramatic effect
+* Tell an actor to move to or face a specific tile and let them figure it out
+* Stop some actors' movements, either immediately or at their next waypoint,
+  and without having to stop all of them
+* Show event CGs for important or dramatic moments
+* Control the viewport with reasonable units and queueing
+* Control the scene's ambient light over time with gradual transitions and
+  queueing
+* Execute blocks of commands conditionally with If/ElseIf/Else/EndIf
+* Execute blocks a certain number of times, or for a certain length of time
 * Set, do arithmetic on, and query your own event variables (goes well with
-    conditional execution)
+  conditional execution)
 * Cause an event to "take time" by advancing the world time when it completes
-    (correctly processing machines and advancing NPCs along their schedules)
-* Make temporary map tile changes or apply map overrides that last only until
-    the current event ends
+  (correctly processing machines and advancing NPCs along their schedules)
+* Make map tile changes or apply map overrides that last only until the
+  current event ends
 
 If these things appeal to you, head over to the [author guide](author-guide.md)
 for details!
