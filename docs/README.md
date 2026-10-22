@@ -3,7 +3,7 @@
 This Stardew Valley mod is a framework (of sorts) which adds a bunch of new
 event commands to the game. These are designed to give you new capabilities
 when writing events, particularly involving event flow and timing. If you
-have been confused by vanilla event commands, or frustrated by their
+have ever been confused by vanilla event commands, or frustrated by their
 limitations, or if you have simply *had it* with `viewport move`, then this
 mod may be for you.
 
@@ -17,6 +17,8 @@ Here are some of the things you can do with these commands:
 * Set up parallel command lists that run without blocking the event loop
 * Loop, stop, restart, and/or wait for parallel lists to finish executing
 * Execute blocks of commands conditionally with If/ElseIf/Else/EndIf
+* Define and run your own custom, complex player control sequences
+* Show large images ("CGs") that can fill the whole screen, for dramatic effect
 * Set, do arithmetic on, and query your own event variables (goes well with
     conditional execution)
 * Cause an event to "take time" by advancing the world time when it completes
@@ -30,11 +32,18 @@ for details!
 
 ## How to Use
 
-Whether you're a user or a mod author, all you have to do to use this mod is
-install it like any other: download it and unzip it into your Mods folder.
-There's no API or data assets or anything: this just uses built-in code
-endpoints to register new event commands (and one trigger action, and one game
-state query), so as long as it's present, the commands will be available.
+As always, mod users should simply unzip and install the mod into their Mods
+folder. For many mod authors, the story is the same: most of this mod's
+features are simply new event commands, and you can use them without any
+special effort. The PlayerControl command requires you to edit a data asset,
+but that is still easily done with Content Patcher, just like the events you
+are writing.
+
+For authors, this mod also comes with some bundled sample events, which you
+can look at with your favorite text editor or watch live in-game with a
+console command.
+
+Consult the [author guide](author-guide.md) for specifics.
 
 
 ## Building

@@ -6,6 +6,7 @@ This document explains how to use the event commands added by this mod.
 ## Contents
 
 * [General Notes](#general-notes)
+* [Sample Events](#sample-events)
 * [Stream Control](#stream-control)
   * [StreamStart](#streamstart)
   * [StreamEnd](#streamend)
@@ -68,15 +69,6 @@ This document explains how to use the event commands added by this mod.
 
 Here are a few terms and things to know to help you read this document.
 
-If you are here for the beta, please check out the example text files in
-the beta zip! There are some (fairly simple) scripts in there that may help
-you understand a particular command more clearly than my prose here.
-
-Each one is formatted correctly to be used as a test event, so simply copy
-the `.txt` file to your game directory, rename it `test_event.txt`, and
-run `debug rte` in your SMAPI console to run it directly. There is no need
-to patch reload or anything else; it will be read live.
-
 When a command says that it "blocks" (verb), or talks about another command
 "blocking", that means that it will pause at that point in the command list
 and prevent the stream from continuing until some condition is met. For
@@ -94,6 +86,38 @@ stands for in a particular command.
 For example, `ViewportMove` has an optional argument `wait`. It expects to
 find the string "wait" there, not the string "true".
 
+
+
+# Sample Events
+
+The Codex comes bundled with some sample events, which are meaningless fluff
+from a content perspective but are meant to demonstrate how the new commands
+work and how you can use them effectively. You can find them in the
+[sample-events](../sample-events/) folder here in the repository; in the
+published zip the folder is called `SampleEvents`.
+
+The events there are in .txt files (there is also one .json file there, called
+`PlayerControlData.json`, which is special and is needed for the sample player
+control event), and they are formatted like test events (a la the
+`debug runtestevent` console command): that is, the commands are written one
+per line, with line breaks instead of `/` characters setting them apart. This
+should make them easier to read, but it also lets you run them directly from
+your SMAPI console:
+
+`ecc_sample`
+
+Run that to see a list of .txt files in your `SampleEvents` directory. Give it
+an argument to run a specific file (the argument will be fuzzy matched against
+the filenames). That file will be loaded cold from disk, parsed into an event,
+and run immediately, just like `debug runtestevent`. For example,
+
+`ecc_sample 01`
+
+or
+
+`ecc_sample playercontrol`
+
+will both match the file `01-PlayerControl.txt`, and run that event right away.
 
 
 # Stream Control
