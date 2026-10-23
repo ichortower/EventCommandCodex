@@ -43,7 +43,7 @@ internal class ConsoleCommands
         try {
             files = Directory.GetFiles(SampleFolderPath).Where((path) => {
                 return !Path.GetFileName(path).EqualsIgnoreCase(SampleJsonName);
-            }).ToArray();
+            }).OrderBy(p => p).ToArray();
         }
         catch (DirectoryNotFoundException e) {
             Log.Warn(e.Message);
