@@ -1,0 +1,28 @@
+Town
+continue
+55 93
+farmer 55 93 0 Lewis -1000 -1000 2
+ichortower.ECC_ViewportMove 0 -3 2100
+advancedMove farmer false 0 -4 4 10
+pause 500
+playSound doorClose
+warp Lewis 58 86
+pause 300
+advancedMove Lewis false 0 2 -1 0 3 10
+pause 1500
+speak Lewis "Ah, @. Good day. May I have a word?"
+emote farmer 32
+advancedMove Lewis false -2 0 0 -3 -1 0 0 -4 -1 0 -9 0 2 10
+pause 80
+advancedMove farmer false -1 0 0 -4 -1 0 0 -3 4 1000 -9 0 4 10
+pause 130
+ichortower.ECC_ViewportMove 54 84 3600
+ichortower.ECC_ViewportMove 52 82 2400
+ichortower.ECC_ViewportMove 44 82 4500
+speak Lewis "As you know, I have a lot on my plate as the well-respected, upstanding mayor of Pelican Town."
+speak Lewis "Yak, yak, yak, I'm just bloviating and we both know it. This is not useful dialogue.#$b#You shouldn't even be listening."
+pause 300
+speak Lewis "What? You *were* listening? Why, you ungrateful...!$4"
+ichortower.ECC_ActorAwaitMovement farmer Lewis
+pause 1000
+end
