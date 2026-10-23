@@ -1,0 +1,74 @@
+Forest
+continue
+86 21
+farmer 86 20 1 Marnie 87 20 3 Shane 85 17 0
+pause 500
+--
+-- This stream loops, and handles Shane doing some busywork while the first
+-- dialogues occur.
+--
+ichortower.ECC_StreamBegin shaneloop
+move Shane 1 0 0
+pause 900
+advancedMove Shane false -2 0 0 -1 1 10
+pause 1800
+showFrame Shane 26
+pause 1100
+faceDirection Shane 1 true
+advancedMove Shane false 0 1 1 0 4 10
+pause 1100
+emote Shane 40
+pause 850
+ichortower.ECC_StreamLoop
+ichortower.ECC_StreamEnd
+--
+pause 1500
+speak Marnie "... Now then, hay, was it? How much do you need?"
+emote farmer 40
+speak Marnie "Got it. I'll have Shane bring it right out.#$b#Shane!"
+faceDirection Marnie 0 true
+ichortower.ECC_StreamHalt shaneloop
+pause 200
+faceDirection farmer 0 true
+ichortower.ECC_ActorAwaitMovement Shane
+faceDirection Shane 2
+speak Shane "What's up?"
+speak Marnie "Be a dear and fetch some hay from inside for @, would you?"
+speak Shane "Sure. No problem."
+--
+-- This stream is longer. Shane goes inside, some time passes, and he
+-- returns. Meanwhile, the main event continues on its own.
+--
+ichortower.ECC_StreamBegin shanefetch
+ichortower.ECC_ActorPathfind Shane 90 16 0 wait
+playSound doorClose
+warp Shane -1000 -1000
+pause 12000
+faceDirection Shane 2 true
+playSound doorClose
+warp Shane 90 16
+advancedMove Shane false 0 1 -3 0 0 2 2 10
+pause 5000
+ichortower.ECC_StreamEnd
+--
+faceDirection Marnie 3 true
+pause 250
+faceDirection farmer 1
+speak Marnie "He always says I'm doing him a big favor letting him stay here, but he really is a lot of help.#$b#Imagine how much more lifting I'd have to do all on my own without him!$h"
+pause 500
+emote Marnie 40
+speak Marnie "I guess I don't have much more to say.$s#$b#How can there be so little gossip in such a small town?"
+speak Marnie "You don't hear anything... untoward, do you? I mean, about... anyone in particular?$s"
+ichortower.ECC_StreamAwait shanefetch
+speak Shane "Here's the hay, aunt Marnie."
+emote Marnie 60 true
+pause 220
+faceDirection Marnie 0
+speak Marnie "Okay! Great. Thank you. Here you go, @.$s"
+faceDirection Marnie 3
+emote farmer 32
+advancedMove farmer false -2 0 0 -2 -4 0 0 -4 4 10
+pause 900
+globalFade
+viewport -1000 -1000
+end
