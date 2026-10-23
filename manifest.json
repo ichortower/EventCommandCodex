@@ -6,6 +6,6 @@
   "UniqueID": "ichortower.ECC",
   "EntryDll": "EventCommandCodex.dll",
   "MinimumApiVersion": "4.1.0",
-  "UpdateKeys": ["Nexus:-1", "GitHub:ichortower/EventCommandCodex"],
+  "UpdateKeys": ["Nexus:53435", "GitHub:ichortower/EventCommandCodex"],
   "Dependencies": []
 }
