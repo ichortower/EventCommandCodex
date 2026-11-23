@@ -814,15 +814,19 @@ descriptions for details, but in all cases please take care not to use spaces.
     (most likely, the image will be cropped/cut off).
   - `stretch`: fill the entire screen, disregarding aspect ratio
     (most likely, the image will be stretched or squashed).
-  - `abs`: use absolute scaling values. This scaling type *requires* at least
-    one floating-point parameter: give just one (e.g. `scaling:abs,4`) to scale
-    X and Y by the same amount, or give two (e.g. `scaling:abs,2.8,2.4`) to
-    scale them differently. This type honors the `i` optional parameter, but
-    you could just specify whole numbers instead so it's not that useful here.
+  - `absolute` or `abs`: use absolute scaling values. This scaling type
+    *requires* at least one floating-point parameter: give just one (e.g.
+    `scaling:absolute,4`) to scale X and Y by the same amount, or give two
+    (e.g. `scaling:abs,2.8,2.4`) to scale them differently. This type honors
+    the `i` optional parameter, but you could just specify whole numbers
+    instead, so it's not that useful here.
 
   The optional parameter `i` means to use integer scaling only (rounding down);
   for example, the argument `scaling:cover,i` might calculate a scale of 3.221
-  to fully cover the screen, but will use 3.0 instead.
+  to fully cover the screen, but will use 3.0 instead. **However**, when
+  scaling a large CG *down* to fit the screen, the "integer" scaling will use
+  multiples of 0.25 (i.e. 0.25, 0.50, or 0.75) rather than allow the scaling to
+  be rounded down to zero.
 
   The default value for the scaling is `scaling:fit,i`, which scales the image
   as much as possible so it fits entirely on screen, while also using an
@@ -838,7 +842,7 @@ descriptions for details, but in all cases please take care not to use spaces.
   `offset:-1,-1` would mean to move it left one whole width and up one whole
   height.
 
-  This is probably most useful when also using `scaling:abs` and showing
+  This is probably most useful when also using `scaling:absolute` and showing
   multiple CGs at once, so you can see them all instead of having them in a
   stack in the center of the screen.
 - `color` is used to tint the image by setting the draw color (as opposed to
