@@ -154,7 +154,7 @@ internal class CG
         else if (val.EqualsIgnoreCase("stretch")) {
             scaling.Type = CGScalingType.Stretch;
         }
-        else if (val.EqualsIgnoreCase("abs")) {
+        else if (val.EqualsIgnoreCase("absolute") || val.EqualsIgnoreCase("abs")) {
             if (pieces.Length <= 1 || !float.TryParse(pieces[1], out scaling.Scale.X)) {
                 error = $"Argument '{arg}' requires a floating-point parameter.";
                 return false;
@@ -166,11 +166,14 @@ internal class CG
         }
         else {
             error = $"Argument '{arg}' could not be parsed: found value '{val}' but" +
-                    " expected one of 'fit', 'cover', 'stretch', or 'abs'.";
+                    " expected one of 'fit', 'cover', 'stretch', or 'absolute'.";
             return false;
         }
         if (pieces.Length > 1 && pieces[^1].EqualsIgnoreCase("i")) {
             scaling.IntegerOnly = true;
+        }
+        else {
+            scaling.IntegerOnly = false;
         }
         return true;
     }
@@ -377,6 +380,8 @@ internal class CG
                     (int)Utility.Lerp(item.AwayPosition.Height, item.OutPosition.Height, whdist));
             // letterbox should follow the cg so its width/height lerps are scaled by the
             // ratio of away size to displayed size
+            //Log.Debug($"{item.AwayPosition.Width} * {Game1.viewport.Width} / {item.OutPosition.Width}");
+            //Log.Debug($"{item.AwayPosition.Height} * {Game1.viewport.Height} / {item.OutPosition.Height}");
             Rectangle letterboxRect = new(
                     destRect.X, destRect.Y,
                     (int)Utility.Lerp(item.AwayPosition.Width * Game1.viewport.Width / item.OutPosition.Width,
@@ -484,40 +489,48 @@ internal class CGItem
         if (SourceRect.IsEmpty) {
             SourceRect = new(0, 0, Texture.Width, Texture.Height);
         }
-        // first figure out the goal width/height
         float xFactor = (float)Game1.viewport.Width / (float)SourceRect.Width;
         float yFactor = (float)Game1.viewport.Height / (float)SourceRect.Height;
-        if (Scaling.IntegerOnly) {
-            xFactor = MathF.Floor(xFactor);
-            yFactor = MathF.Floor(yFactor);
-        }
+        Vector2 finalScaling = new(xFactor, yFactor);
+
         float matchFactor;
         switch (Scaling.Type) {
         case CGScalingType.Cover:
             matchFactor = MathF.Max(xFactor, yFactor);
-            OutPosition.Width = (int)(matchFactor * SourceRect.Width);
-            OutPosition.Height = (int)(matchFactor * SourceRect.Height);
+            finalScaling.X = matchFactor;
+            finalScaling.Y = matchFactor;
             break;
         case CGScalingType.Stretch:
-            OutPosition.Width = (int)(xFactor * SourceRect.Width);
-            OutPosition.Height = (int)(yFactor * SourceRect.Height);
+            // do nothing; final scaling is already correct
             break;
         case CGScalingType.Absolute:
-            Vector2 clampedScale = new(MathF.Max(0f, Scaling.Scale.X), MathF.Max(0f, Scaling.Scale.Y));
-            if (Scaling.IntegerOnly) {
-                clampedScale.X = MathF.Floor(clampedScale.X);
-                clampedScale.Y = MathF.Floor(clampedScale.Y);
-            }
-            OutPosition.Width = (int)(clampedScale.X * SourceRect.Width);
-            OutPosition.Height = (int)(clampedScale.Y * SourceRect.Height);
+            finalScaling.X = MathF.Max(0f, Scaling.Scale.X);
+            finalScaling.Y = MathF.Max(0f, Scaling.Scale.Y);
             break;
         case CGScalingType.Fit:
         default:
             matchFactor = MathF.Min(xFactor, yFactor);
-            OutPosition.Width = (int)(matchFactor * SourceRect.Width);
-            OutPosition.Height = (int)(matchFactor * SourceRect.Height);
+            finalScaling.X = matchFactor;
+            finalScaling.Y = matchFactor;
             break;
         }
+
+        if (Scaling.IntegerOnly) {
+            finalScaling.X = finalScaling.X switch {
+                >= 1f => MathF.Floor(finalScaling.X),
+                >= 0.75f => 0.75f,
+                >= 0.50f => 0.50f,
+                _ => 0.25f,
+            };
+            finalScaling.Y = finalScaling.Y switch {
+                >= 1f => MathF.Floor(finalScaling.Y),
+                >= 0.75f => 0.75f,
+                >= 0.50f => 0.50f,
+                _ => 0.25f,
+            };
+        }
+        OutPosition.Width = (int)(finalScaling.X * SourceRect.Width);
+        OutPosition.Height = (int)(finalScaling.Y * SourceRect.Height);
         // goal x/y are always center, because we offset at draw time (scale from center)
         // to make zoom look right when querped
         OutPosition.X = Game1.viewport.Width / 2;
